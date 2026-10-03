@@ -1,0 +1,7 @@
+*.tar.gz
+.sites-runtime/
+.env
+__pycache__/
+.openai/
+*.data
+*.data.bin

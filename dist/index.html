@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#182423">
+  <meta name="description" content="扮演藺相如，在完璧歸趙、澠池之會、負荊請罪中作出歷史抉擇。">
+  <title>廉頗藺相如列傳</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23182423'/%3E%3Ccircle cx='16' cy='16' r='10' fill='%238eb49d'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23182423'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="preload" as="image" href="./assets/d6049d3421020e17.jpg">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <a class="skip-link" href="#game">前往遊戲</a>
+  <div class="page">
+    <header class="masthead">
+      <div class="brand"><span class="seal" aria-hidden="true">史</span><h1>廉頗藺相如列傳</h1></div>
+      <nav class="tools" aria-label="遊戲工具">
+        <button id="save-button" disabled>存檔</button>
+        <button id="load-button">讀檔</button>
+        <button id="history-button" disabled>紀錄</button>
+        <button id="music-button" aria-pressed="false">音樂：開</button>
+        <button id="fullscreen-button">全螢幕</button>
+      </nav>
+    </header>
+
+    <main id="game" tabindex="-1">
+      <div class="chapter-line" id="chapter-line" aria-label="目前章節">
+        <span class="chapter current" data-map="1">一<span>完璧歸趙</span></span>
+        <span class="chapter" data-map="2">二<span>澠池之會</span></span>
+        <span class="chapter" data-map="3">三<span>負荊請罪</span></span>
+      </div>
+
+      <div class="game-frame" id="game-frame">
+        <div class="stage" id="stage" aria-label="遊戲場景">
+          <div id="pictures" aria-hidden="true"></div>
+          <section class="title-screen" id="title-screen" aria-label="遊戲首頁">
+            <img class="cover" src="./assets/d6049d3421020e17.jpg" alt="藺相如手持玉璧的遊戲封面" width="960" height="540">
+            <div class="start-menu">
+              <button class="primary" id="start-button" disabled>載入中</button>
+              <button id="continue-button" disabled hidden>接續上次進度</button>
+            </div>
+          </section>
+          <div class="scene-prompt" id="scene-prompt" hidden>請作出你的抉擇</div>
+        </div>
+
+        <section class="dialogue" id="dialogue" aria-label="劇情對話" hidden>
+          <div class="dialogue-inner">
+            <div class="speaker" id="speaker"></div>
+            <div class="story-text" id="story-text" aria-hidden="true"></div>
+            <div class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></div>
+            <div class="choices" id="choices" role="group" aria-label="劇情選項" hidden></div>
+            <div class="dialogue-actions">
+              <button class="quiet" id="auto-button" aria-pressed="false">自動：關</button>
+              <button class="next-button" id="next-button">繼續<span class="next-mark" aria-hidden="true">▾</span></button>
+            </div>
+          </div>
+        </section>
+
+        <section class="ending" id="ending" aria-labelledby="ending-title" hidden>
+          <p class="ending-eyebrow">故事中的一個結局</p>
+          <h2 id="ending-title">本段劇情結束</h2>
+          <p class="ending-text" id="ending-text"></p>
+          <div class="ending-actions">
+            <button class="primary" id="retry-button">重新抉擇</button>
+            <button id="home-button">回到首頁</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="below-stage">
+        <p id="instruction">點擊「開始遊戲」，走進藺相如的故事。</p>
+        <button class="quiet" id="return-button" hidden>回到首頁</button>
+      </div>
+      <noscript><p class="notice">請啟用瀏覽器的 JavaScript，才能遊玩此遊戲。</p></noscript>
+      <div id="load-error" class="notice" role="alert" hidden>遊戲暫時未能載入，請重新整理頁面。</div>
+    </main>
+
+    <dialog id="menu-dialog" aria-labelledby="dialog-title">
+      <div class="modal-header"><h2 id="dialog-title"></h2><button id="dialog-close" aria-label="關閉視窗">✕</button></div>
+      <div id="dialog-body"></div>
+    </dialog>
+    <div id="toast" role="status" aria-live="polite" hidden></div>
+  </div>
+</body>
+</html>
