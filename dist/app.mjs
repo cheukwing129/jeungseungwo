@@ -1,9 +1,10 @@
 import {GameEngine,plainText,textRuns} from './engine.mjs';
 import {LocalSaves} from './storage.mjs';
 import {PictureRenderer} from './pictures.mjs';
+import {DialogueHold} from './dialogue-hold.mjs';
 
 const $ = id => document.getElementById(id);
-let story, assets, engine, saved, saves;
+let story, assets, engine, saved, saves, dialogueHold;
 let typing = null, typeTimer = 0, autoTimer = 0, auto = false, toastTimer = 0;
 let started = false, busy = false, storageWarned = false;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -57,7 +58,17 @@ function playEffects(effects) {
   }
 }
 
-function stopTyping() { clearInterval(typeTimer); typeTimer=0; typing=null; }
+function playbackRate() { return dialogueHold?.active ? 2 : 1; }
+function updatePlayback() {
+  $('hold-status').hidden=!dialogueHold.active;
+  clearTimeout(autoTimer);
+  if (typing) {
+    clearTimeout(typeTimer);
+    typeTimer=setTimeout(typing.tick,26/playbackRate());
+  } else scheduleAuto();
+}
+
+function stopTyping() { clearTimeout(typeTimer); typeTimer=0; typing=null; }
 function completeText() {
   if (!typing) return;
   const {spans,runs} = typing;
@@ -85,25 +96,28 @@ function renderText(speaker,text,animate) {
   if (!animate || reducedMotion) {scheduleAuto();return;}
   const characters=runs.map(run=>Array.from(run.text));
   let runIndex=0,position=0;
-  typing={spans,runs};
-  typeTimer=setInterval(()=>{
+  const tick=()=>{
     if (!typing) return;
     if (runIndex>=characters.length) {stopTyping();scheduleAuto();return;}
     spans[runIndex].textContent+=characters[runIndex][position++] || '';
     if(position>=characters[runIndex].length){runIndex++;position=0;}
-  },26);
+    typeTimer=setTimeout(tick,26/playbackRate());
+  };
+  typing={spans,runs,tick};
+  typeTimer=setTimeout(tick,26/playbackRate());
 }
 
 function scheduleAuto() {
   clearTimeout(autoTimer);
-  if (!auto || !started || $('menu-dialog').open || document.hidden || engine.state.current.kind!=='text') return;
+  if ((!auto && !dialogueHold?.active) || typing || !started || $('menu-dialog').open || document.hidden || engine.state.current.kind!=='text') return;
   const length=plainText(engine.state.current.text).length;
-  autoTimer=setTimeout(next,Math.max(1500,Math.min(6000,length*40)));
+  autoTimer=setTimeout(next,Math.max(1500,Math.min(6000,length*40))/playbackRate());
 }
 
 function render(result,{animate=true}={}) {
   clearTimeout(autoTimer);
   const state=result.state,current=state.current;
+  if(current.kind!=='text')dialogueHold?.cancel();
   started=true;
   $('title-screen').hidden=true;
   $('return-button').hidden=false;
@@ -123,7 +137,7 @@ function render(result,{animate=true}={}) {
   pictureRenderer.render(state.pictures, assets, {width:story.width, height:story.height});
   if(current.kind==='text') {
     renderText(current.speaker,current.text,animate);
-    $('instruction').textContent='點擊畫面或按空白鍵繼續；文字顯示時點一下可立即看完整段。';
+    $('instruction').textContent='點擊畫面或按空白鍵繼續；點一下可顯示完整文字。按住對話框可兩倍速播放，放開即停止快讀。';
   } else if(current.kind==='choice') {
     const last=[...state.history].reverse().find(item=>!item.choice);
     renderText(last?.speaker || '',last?.text || '',false);
@@ -161,9 +175,9 @@ function choose(index) {
   busy=true;
   try{render(engine.choose(index));}catch(error){handleError(error);}finally{busy=false;}
 }
-function start() {auto=false;updateAuto();render(engine.start());}
+function start() {auto=false;dialogueHold?.cancel();updateAuto();render(engine.start());}
 function resume(item) {
-  try{auto=false;updateAuto();render(engine.restore(item.snapshot),{animate:false});closeDialog();}
+  try{auto=false;dialogueHold?.cancel();updateAuto();render(engine.restore(item.snapshot),{animate:false});closeDialog();}
   catch(error){handleError(error);}
 }
 
@@ -171,6 +185,7 @@ function updateAuto() {$('auto-button').textContent=`自動：${auto?'開':'關'
 function updateMusic() {$('music-button').textContent=`音樂：${saved.settings.muted?'關':'開'}`;$('music-button').setAttribute('aria-pressed',String(saved.settings.muted));}
 
 function openDialog(title) {
+  dialogueHold?.cancel();
   completeText();clearTimeout(autoTimer);
   $('dialog-title').textContent=title;$('dialog-body').replaceChildren();
   if(!$('menu-dialog').open)$('menu-dialog').showModal();
@@ -221,6 +236,7 @@ function showHistory() {
 }
 
 function home() {
+  dialogueHold?.cancel();
   stopTyping();clearTimeout(autoTimer);auto=false;updateAuto();started=false;
   $('title-screen').hidden=false;$('dialogue-panel').hidden=true;$('ending').hidden=true;$('scene-prompt').hidden=true;
   $('return-button').hidden=true;$('save-button').disabled=true;$('history-button').disabled=true;
@@ -273,7 +289,12 @@ async function init() {
     $('continue-button').addEventListener('click',()=>saved.auto && resume(saved.auto));
     $('next-button').addEventListener('click',next);
     $('stage').addEventListener('click',event=>{if(!event.target.closest('button') && started)next();});
-    $('dialogue').addEventListener('click',event=>{if(!event.target.closest('button'))next();});
+    dialogueHold=new DialogueHold($('dialogue'), {
+      canStart:()=>started && !busy && !document.hidden && !$('menu-dialog').open && engine.state?.current.kind==='text',
+      onChange:updatePlayback,
+      onClick:next,
+    });
+    $('game-frame').addEventListener('dragstart',event=>event.preventDefault());
     $('auto-button').addEventListener('click',()=>{auto=!auto;updateAuto();if(auto)completeText();scheduleAuto();});
     $('music-button').addEventListener('click',()=>{
       saved.settings.muted=!saved.settings.muted;persist();updateMusic();syncMusic();

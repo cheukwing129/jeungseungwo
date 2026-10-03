@@ -11,3 +11,9 @@
 @container(max-width:480px){.dialogue{--dialogue-height:15rem;--dialogue-ornament:36px}}
 @container(max-width:360px){.dialogue{--dialogue-height:17rem;--dialogue-ornament:28px}.dialogue-inner{padding:.875rem calc(var(--dialogue-ornament) + .625rem)}}
 @container(max-width:280px){.dialogue{--dialogue-height:19rem}}
+
+/* Keep repeated clicks and long presses from selecting text or showing a touch highlight. */
+.game-frame{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+button{-webkit-tap-highlight-color:transparent}
+.dialogue{touch-action:pan-y pinch-zoom}
+.hold-status{font-size:.875rem;color:var(--gold);white-space:nowrap}
