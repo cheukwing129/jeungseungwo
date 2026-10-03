@@ -18,7 +18,8 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory dist
 首頁按「開始遊戲」。點擊場景、對話框或「繼續」閱讀下一段；文字
 逐字顯示時，先點一下可顯示完整段落。選項可點擊或按數字鍵 1–3。
 自動播放遇到選項即停下。提供劇情紀錄、三個手動存檔及自動存檔。
-按住對話框約 0.3 秒，可暫時以兩倍速度顯示文字及自動換頁；放開即
+按住對話框約 0.3 秒，可暫時以五倍速度顯示文字並連續換頁。文字
+顯示完即接到下一段，沒有額外的轉頁停頓，下一頁首字立即出現；放開即
 停止快讀，若原本已開啟自動播放則恢復正常速度。遇到選項、結局、
 打開選單、滑動頁面或切換應用程式時會停止快讀。遊戲區域的點擊及
 長按不再選取文字或顯示觸控反白；可在劇情紀錄中選取文字。
@@ -57,7 +58,7 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory dist
 - `tools/export_story.py`：抽取原始指令及建立分支位置。
 - `tools/test_game.mjs`：遍歷每個可達分支、檢查素材與存讀檔。
 - `tools/test_pictures.mjs`：檢查各章人物貼底、讀檔與快速換頁的立繪顯示。
-- `tools/test_controls.mjs`：檢查短按、長按兩倍速、放開停止及選項／選單中斷。
+- `tools/test_controls.mjs`：檢查短按、長按五倍速、無等待換頁、放開停止及選項／選單中斷。
 
 驗證：`node tools/test_game.mjs` 及 `node tools/test_pictures.mjs`。
 互動驗證：`node tools/test_controls.mjs`。

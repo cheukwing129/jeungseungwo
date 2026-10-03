@@ -58,7 +58,7 @@ function playEffects(effects) {
   }
 }
 
-function playbackRate() { return dialogueHold?.active ? 2 : 1; }
+function playbackRate() { return dialogueHold?.active ? 5 : 1; }
 function updatePlayback() {
   $('hold-status').hidden=!dialogueHold.active;
   clearTimeout(autoTimer);
@@ -93,7 +93,11 @@ function renderText(speaker,text,animate) {
     span.textContent=animate && !reducedMotion ? '' : run.text;
     target.append(span);spans.push(span);
   }
-  if (!animate || reducedMotion) {scheduleAuto();return;}
+  if (!animate || reducedMotion) {
+    // Static text uses only its five-speed presentation time, without a separate page pause.
+    scheduleAuto({fastTextDuration:Array.from(plainText(text)).length*26});
+    return;
+  }
   const characters=runs.map(run=>Array.from(run.text));
   let runIndex=0,position=0;
   const tick=()=>{
@@ -101,17 +105,20 @@ function renderText(speaker,text,animate) {
     if (runIndex>=characters.length) {stopTyping();scheduleAuto();return;}
     spans[runIndex].textContent+=characters[runIndex][position++] || '';
     if(position>=characters[runIndex].length){runIndex++;position=0;}
+    if(runIndex>=characters.length) {stopTyping();scheduleAuto();return;}
     typeTimer=setTimeout(tick,26/playbackRate());
   };
   typing={spans,runs,tick};
-  typeTimer=setTimeout(tick,26/playbackRate());
+  if(dialogueHold?.active)tick();
+  else typeTimer=setTimeout(tick,26/playbackRate());
 }
 
-function scheduleAuto() {
+function scheduleAuto({fastTextDuration=0}={}) {
   clearTimeout(autoTimer);
   if ((!auto && !dialogueHold?.active) || typing || !started || $('menu-dialog').open || document.hidden || engine.state.current.kind!=='text') return;
   const length=plainText(engine.state.current.text).length;
-  autoTimer=setTimeout(next,Math.max(1500,Math.min(6000,length*40))/playbackRate());
+  const delay=dialogueHold?.active ? fastTextDuration/playbackRate() : Math.max(1500,Math.min(6000,length*40));
+  autoTimer=setTimeout(next,delay);
 }
 
 function render(result,{animate=true}={}) {
@@ -137,7 +144,7 @@ function render(result,{animate=true}={}) {
   pictureRenderer.render(state.pictures, assets, {width:story.width, height:story.height});
   if(current.kind==='text') {
     renderText(current.speaker,current.text,animate);
-    $('instruction').textContent='點擊畫面或按空白鍵繼續；點一下可顯示完整文字。按住對話框可兩倍速播放，放開即停止快讀。';
+    $('instruction').textContent='點擊畫面或按空白鍵繼續；點一下可顯示完整文字。按住對話框可五倍速連續播放，放開即停止快讀。';
   } else if(current.kind==='choice') {
     const last=[...state.history].reverse().find(item=>!item.choice);
     renderText(last?.speaker || '',last?.text || '',false);

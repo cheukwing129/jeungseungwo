@@ -16,6 +16,13 @@ class Clock {
     return id;
   };
   clear = id => this.tasks.delete(id);
+  runNext() {
+    const next = [...this.tasks].sort((a, b) => a[1].due - b[1].due)[0];
+    assert(next, 'No pending timer');
+    this.now = next[1].due;
+    this.tasks.delete(next[0]);
+    next[1].callback();
+  }
   advance(milliseconds) {
     const target = this.now + milliseconds;
     for (let guard = 0; guard < 10000; guard++) {
@@ -121,38 +128,43 @@ const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf
 const app = await readFile(new URL('../dist/app.mjs', import.meta.url), 'utf8');
 
 // Execute the actual application handlers against deterministic input and timers.
-const clock = new Clock(), {owner:document} = surfaces(), nodes = new Map();
-for (const match of html.matchAll(/<([a-z]+)[^>]*\bid="([^"]+)"/g)) nodes.set(match[2], new NodeStub(document, match[1]));
-document.getElementById = id => nodes.get(id);
-document.createElement = tag => new NodeStub(document, tag);
-const chapters = story.maps.map(map => { const node = new NodeStub(document); node.dataset.map = String(map.id); return node; });
-document.querySelectorAll = () => chapters;
-class ImageStub extends NodeStub { constructor() { super(document, 'img'); } }
-class AudioStub extends EventTarget { play() { return Promise.resolve(); } pause() {} }
-class HoldWithClock extends DialogueHold {
-  constructor(element, options) { super(element, {...options, setTimer:clock.set, clearTimer:clock.clear}); }
+async function application(reducedMotion = false) {
+  const clock = new Clock(), {owner:document} = surfaces(), nodes = new Map();
+  for (const match of html.matchAll(/<([a-z]+)[^>]*\bid="([^"]+)"/g)) nodes.set(match[2], new NodeStub(document, match[1]));
+  document.getElementById = id => nodes.get(id);
+  document.createElement = tag => new NodeStub(document, tag);
+  const chapters = story.maps.map(map => { const node = new NodeStub(document); node.dataset.map = String(map.id); return node; });
+  document.querySelectorAll = () => chapters;
+  class ImageStub extends NodeStub { constructor() { super(document, 'img'); } }
+  class AudioStub extends EventTarget { play() { return Promise.resolve(); } pause() {} }
+  class HoldWithClock extends DialogueHold {
+    constructor(element, options) { super(element, {...options, setTimer:clock.set, clearTimer:clock.clear}); }
+  }
+  class PicturesWithClock extends PictureRenderer {
+    constructor(layer, options) { super(layer, {...options, createImage:() => new ImageStub(),
+      requestFrame:callback => clock.set(callback, 0), setTimer:clock.set}); }
+  }
+  const memory = new Map(), logs = [];
+  const context = vm.createContext({
+    document, GameEngine, plainText, textRuns, LocalSaves, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
+    structuredClone, matchMedia:() => ({matches:reducedMotion}), Audio:AudioStub,
+    localStorage:{getItem:key => memory.get(key) || null, setItem:(key, value) => memory.set(key, value)},
+    fetch:async url => ({ok:true, json:async() => url.includes('story.json') ? story : assets}),
+    setTimeout:clock.set, clearTimeout:clock.clear, requestAnimationFrame:callback => clock.set(callback, 0),
+    addEventListener:document.defaultView.addEventListener.bind(document.defaultView),
+    console:{error:error => logs.push(error)},
+  });
+  vm.runInContext(app.replace(/^import .*;\n/gm, '').replace(/\ninit\(\);\s*$/, '\nglobalThis.ready=init();'), context);
+  await context.ready;
+  assert.deepEqual(logs, [], 'Application initialization failed');
+  const read = expression => vm.runInContext(expression, context);
+  return {clock, document, nodes, context, read, logs};
 }
-class PicturesWithClock extends PictureRenderer {
-  constructor(layer, options) { super(layer, {...options, createImage:() => new ImageStub(),
-    requestFrame:callback => clock.set(callback, 0), setTimer:clock.set}); }
-}
-const memory = new Map(), logs = [];
-const context = vm.createContext({
-  document, GameEngine, plainText, textRuns, LocalSaves, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
-  structuredClone, matchMedia:() => ({matches:false}), Audio:AudioStub,
-  localStorage:{getItem:key => memory.get(key) || null, setItem:(key, value) => memory.set(key, value)},
-  fetch:async url => ({ok:true, json:async() => url.includes('story.json') ? story : assets}),
-  setTimeout:clock.set, clearTimeout:clock.clear, requestAnimationFrame:callback => clock.set(callback, 0),
-  addEventListener:document.defaultView.addEventListener.bind(document.defaultView),
-  console:{error:error => logs.push(error)},
-});
-vm.runInContext(app.replace(/^import .*;\n/gm, '').replace(/\ninit\(\);\s*$/, '\nglobalThis.ready=init();'), context);
-await context.ready;
-assert.deepEqual(logs, [], 'Application initialization failed');
-const read = expression => vm.runInContext(expression, context);
+
+const {clock, document, nodes, context, read, logs} = await application();
 const box = nodes.get('dialogue');
 function tap() { emit(box, 'pointerdown', pointer()); emit(box, 'pointerup', pointer()); emit(box, 'click'); }
-function hold() { emit(box, 'pointerdown', pointer()); clock.advance(300); assert.equal(read('playbackRate()'), 2); }
+function hold() { emit(box, 'pointerdown', pointer()); clock.advance(300); assert.equal(read('playbackRate()'), 5); }
 function release() { emit(box, 'pointerup', pointer()); emit(box, 'click'); }
 const position = () => read('`${engine.state.mapId}:${engine.state.current.eventIndex}`');
 const pause = () => read('Math.max(1500,Math.min(6000,plainText(engine.state.current.text).length*40))');
@@ -164,26 +176,44 @@ tap(); assert.notEqual(position(), first); tap();
 const beforeHold = position();
 hold(); assert.equal(nodes.get('hold-status').hidden, false);
 assert.equal(read('auto'), false, 'Temporary hold changed the normal auto setting');
-assert.equal(clock.remaining(read('autoTimer')), pause() / 2);
-clock.advance(pause() / 2 - 1); assert.equal(position(), beforeHold);
-release(); assert.equal(position(), beforeHold);
-assert.equal(nodes.get('hold-status').hidden, true);
-clock.advance(8000); assert.equal(position(), beforeHold, 'Dialogue advanced after releasing');
-
-hold(); clock.advance(pause() / 2);
 assert.notEqual(position(), beforeHold, 'Holding did not automatically advance the dialogue');
-assert.equal(clock.remaining(read('typeTimer')), 13, 'Text did not run at twice the normal speed');
+assert.equal(Array.from(nodes.get('story-text').textContent).length, 1, 'A new page starts blank');
+assert(Math.abs(clock.remaining(read('typeTimer')) - 26 / 5) < 1e-7, 'Text did not run at five times the normal speed');
 const fastPage = position();
-clock.advance(13); assert.equal(Array.from(nodes.get('story-text').textContent).length, 1);
+clock.advance(26 / 5); assert.equal(Array.from(nodes.get('story-text').textContent).length, 2);
 release(); assert.equal(position(), fastPage);
+assert.equal(nodes.get('hold-status').hidden, true);
 assert.equal(clock.remaining(read('typeTimer')), 26, 'Releasing did not restore the normal text speed');
 clock.advance(8000); assert.equal(position(), fastPage);
+const stableSnapshot = read('engine.snapshot()');
+
+// The final glyph schedules the next page without any reading pause or blank first frame.
+hold();
+while (read('typing')) clock.runNext();
+const completedPage = position(), completedAt = clock.now;
+assert.equal(nodes.get('story-text').textContent, read('plainText(engine.state.current.text)'));
+assert.equal(clock.remaining(read('autoTimer')), 0, 'Fast playback still waits after the final glyph');
+clock.advance(0);
+assert.notEqual(position(), completedPage);
+assert.equal(clock.now, completedAt, 'A page transition consumed extra waiting time');
+assert(nodes.get('story-text').textContent.length > 0, 'The next page left the dialogue frame empty');
+release();
+
+// Release can cancel even a ready-to-run page transition, without an extra click.
+context.stableSnapshot = stableSnapshot;
+read('render(engine.restore(stableSnapshot),{animate:false})'); hold();
+while (read('typing')) clock.runNext();
+const releasedPage = position();
+assert.equal(clock.remaining(read('autoTimer')), 0);
+release(); clock.advance(8000);
+assert.equal(position(), releasedPage, 'A queued page transition ran after releasing');
 
 // An already-enabled auto mode resumes its normal speed after the hold ends.
 emit(nodes.get('auto-button'), 'click');
 assert.equal(read('auto'), true); assert.equal(clock.remaining(read('autoTimer')), pause());
-hold(); assert.equal(clock.remaining(read('autoTimer')), pause() / 2);
-release(); assert.equal(read('auto'), true); assert.equal(clock.remaining(read('autoTimer')), pause());
+hold(); release(); assert.equal(read('auto'), true);
+if (read('typing')) tap();
+assert.equal(clock.remaining(read('autoTimer')), pause());
 emit(nodes.get('auto-button'), 'click');
 
 // A real story choice interrupts the hold and requires an explicit choice.
@@ -196,7 +226,7 @@ while (sourceGame.state.current.kind === 'text') {
 assert(precedingChoice);
 context.testSnapshot = precedingChoice;
 read('render(engine.restore(testSnapshot),{animate:false})');
-hold(); clock.advance(pause() / 2);
+emit(box, 'pointerdown', pointer()); clock.advance(300);
 assert.equal(read('engine.state.current.kind'), 'choice');
 assert.equal(read('dialogueHold.active'), false); release(); clock.advance(10000);
 assert.equal(read('engine.state.current.kind'), 'choice');
@@ -204,14 +234,15 @@ assert.equal(read('engine.state.decisions.length'), 0, 'Fast playback selected a
 emit(box, 'pointerdown', pointer()); clock.advance(1000);
 assert.equal(read('dialogueHold.active'), false); emit(box, 'pointerup', pointer());
 
-read('render(engine.restore(testSnapshot),{animate:false})'); hold();
+read('render(engine.restore(stableSnapshot),{animate:false})'); hold();
 emit(nodes.get('history-button'), 'click');
 assert.equal(read('dialogueHold.active'), false); assert(nodes.get('menu-dialog').open);
 const menuPage = position(); clock.advance(10000); assert.equal(position(), menuPage);
 emit(nodes.get('dialog-close'), 'click');
-hold(); document.hidden = true; emit(document, 'visibilitychange');
-assert.equal(read('dialogueHold.active'), false); clock.advance(10000); assert.equal(position(), menuPage);
+hold(); const visibilityPage = position(); document.hidden = true; emit(document, 'visibilitychange');
+assert.equal(read('dialogueHold.active'), false); clock.advance(10000); assert.equal(position(), visibilityPage);
 document.hidden = false; emit(document, 'visibilitychange');
+release();
 
 const endingGame = new GameEngine(story); endingGame.start();
 for (let guard = 0; !endingGame.state.ended && guard < 2000; guard++) {
@@ -227,6 +258,22 @@ release(); clock.advance(10000);
 assert.equal(read('engine.state.current.kind'), 'ending');
 assert.deepEqual(logs, [], 'A dialogue interaction threw an error');
 
-console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'26 ms → 13 ms',
-  pageWait:'halved',releaseWithoutExtraPage:'passed',normalAutoResume:'passed',choiceStop:'passed',
-  scrollAndLifecycleCancellation:'passed',menuAndVisibilityStop:'passed',endingStop:'passed'}, null, 2));
+// Reduced motion presents static text at the same rate, without a chapter-skipping timer loop.
+const reduced = await application(true), reducedBox = reduced.nodes.get('dialogue');
+emit(reduced.nodes.get('start-button'), 'click');
+emit(reducedBox, 'pointerdown', pointer()); reduced.clock.advance(300);
+assert.equal(reduced.read('playbackRate()'), 5);
+assert.equal(reduced.read('typing'), null);
+const displayTime = reduced.read('Array.from(plainText(engine.state.current.text)).length*26/5');
+assert(Math.abs(reduced.clock.remaining(reduced.read('autoTimer')) - displayTime) < 1e-7);
+assert(reduced.nodes.get('story-text').textContent.length > 0);
+const staticPage = reduced.read('engine.state.current.eventIndex');
+reduced.clock.advance(displayTime);
+assert.notEqual(reduced.read('engine.state.current.eventIndex'), staticPage);
+emit(reducedBox, 'pointerup', pointer()); emit(reducedBox, 'click');
+const staticRelease = reduced.read('engine.state.current.eventIndex');
+reduced.clock.advance(10000); assert.equal(reduced.read('engine.state.current.eventIndex'), staticRelease);
+
+console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'26 ms → 5.2 ms',
+  pageWait:'none',immediateFirstGlyph:'passed',releaseWithoutExtraPage:'passed',normalAutoResume:'passed',choiceStop:'passed',
+  scrollAndLifecycleCancellation:'passed',menuAndVisibilityStop:'passed',endingStop:'passed',reducedMotion:'passed'}, null, 2));
