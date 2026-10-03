@@ -67,3 +67,17 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory dist
 - 測試需要 Node.js；轉換工具及上述本機 HTTP 伺服器使用 Python 3。
 - 遊戲不需要安裝 npm 套件或建置，靜態主機的發佈目錄為 `dist/`。
 - 原橙光二進位工程、舊播放器與其帳戶資料不屬於網頁遊戲執行檔案。
+
+## Cloudflare Pages 部署
+
+連接 `cheukwing129/jeungseungwo`，正式分支選擇 `main`，Framework preset
+選擇 `None`，Build command 填寫 `exit 0`，Build output directory 為 `dist`。
+Root directory 保持預設的儲存庫根目錄。
+
+`wrangler.toml` 亦明確指定 `pages_build_output_dir = "./dist"`，讓 Git
+部署直接使用已完成的遊戲入口 `dist/index.html`。毋須安裝 npm 套件。
+
+儲存庫根目錄的 `index.html` 提供跳轉入口；若整個儲存庫被發佈，首頁
+會轉到 `dist/`。正常以 `dist/` 為發佈目錄時，則直接顯示遊戲首頁。
+
+遊戲網址：<https://jeungseungwo.pages.dev/>。
