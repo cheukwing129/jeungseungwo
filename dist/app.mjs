@@ -132,9 +132,10 @@ function render(result,{animate=true}={}) {
   started=true;
   $('title-screen').hidden=true;
   $('return-button').hidden=false;
-  $('dialogue').hidden=current.kind==='ending';
+  $('dialogue-panel').hidden=current.kind==='ending';
   $('ending').hidden=current.kind!=='ending';
   $('choices').hidden=current.kind!=='choice';
+  $('dialogue-actions').hidden=current.kind!=='text';
   $('scene-prompt').hidden=current.kind!=='choice';
   $('next-button').hidden=current.kind!=='text';
   $('auto-button').hidden=current.kind!=='text';
@@ -246,7 +247,7 @@ function showHistory() {
 
 function home() {
   stopTyping();clearTimeout(autoTimer);auto=false;updateAuto();started=false;
-  $('title-screen').hidden=false;$('dialogue').hidden=true;$('ending').hidden=true;$('scene-prompt').hidden=true;
+  $('title-screen').hidden=false;$('dialogue-panel').hidden=true;$('ending').hidden=true;$('scene-prompt').hidden=true;
   $('return-button').hidden=true;$('save-button').disabled=true;$('history-button').disabled=true;
   $('continue-button').disabled=!saved.auto;
   $('continue-button').hidden=!saved.auto;

@@ -45,18 +45,20 @@
           <div class="scene-prompt" id="scene-prompt" hidden>請作出你的抉擇</div>
         </div>
 
-        <section class="dialogue" id="dialogue" aria-label="劇情對話" hidden>
-          <div class="dialogue-inner">
-            <div class="speaker" id="speaker"></div>
-            <div class="story-text" id="story-text" aria-hidden="true"></div>
-            <div class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></div>
-            <div class="choices" id="choices" role="group" aria-label="劇情選項" hidden></div>
-            <div class="dialogue-actions">
-              <button class="quiet" id="auto-button" aria-pressed="false">自動：關</button>
-              <button class="next-button" id="next-button">繼續<span class="next-mark" aria-hidden="true">▾</span></button>
+        <div class="dialogue-panel" id="dialogue-panel" hidden>
+          <section class="dialogue" id="dialogue" aria-label="劇情對話">
+            <div class="dialogue-inner">
+              <div class="speaker" id="speaker"></div>
+              <div class="story-text" id="story-text" aria-hidden="true"></div>
+              <div class="sr-only" id="announcement" aria-live="polite" aria-atomic="true"></div>
             </div>
+          </section>
+          <div class="choices" id="choices" role="group" aria-label="劇情選項" hidden></div>
+          <div class="dialogue-actions" id="dialogue-actions">
+            <button class="quiet" id="auto-button" aria-pressed="false">自動：關</button>
+            <button class="next-button" id="next-button">繼續<span class="next-mark" aria-hidden="true">▾</span></button>
           </div>
-        </section>
+        </div>
 
         <section class="ending" id="ending" aria-labelledby="ending-title" hidden>
           <p class="ending-eyebrow">故事中的一個結局</p>
