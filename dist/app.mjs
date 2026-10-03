@@ -1,10 +1,11 @@
 import {GameEngine,plainText,textRuns} from './engine.mjs?v=20261003-text-flow';
-import {LocalSaves} from './storage.mjs';
+import {LocalSaves} from './storage.mjs?v=20261003-replay';
+import {ReplayLibrary} from './replay.mjs?v=20261003-replay';
 import {PictureRenderer} from './pictures.mjs';
 import {DialogueHold} from './dialogue-hold.mjs?v=20261003-desktop';
 
 const $ = id => document.getElementById(id);
-let story, assets, engine, saved, saves, dialogueHold;
+let story, assets, engine, saved, saves, dialogueHold, replay;
 let typing = null, typeTimer = 0, autoTimer = 0, auto = false, toastTimer = 0;
 let started = false, busy = false, storageWarned = false;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -34,7 +35,9 @@ function entry(snapshot) {
 
 function autosave() {
   if (!engine.state) return;
-  saved.auto = entry(engine.snapshot()); persist();
+  const snapshot = engine.snapshot();
+  replay.record(snapshot);saved.progress = replay.progress;
+  saved.auto = entry(snapshot);persist();
 }
 
 function assetUrl(key) { return assets[key]?.src || null; }
@@ -180,10 +183,12 @@ function render(result,{animate=true}={}) {
     $('ending-title').textContent=current.completed?'全劇終':current.category==='理解回饋'?'再想一想':'偏離原文走向';
     $('ending-eyebrow').textContent=current.category || (current.completed?'故事落幕':'假設情節');
     $('retry-button').hidden=current.completed || !engine.lastChoice;
-    $('instruction').textContent=current.completed?'故事已結束，感謝遊玩。':'可以回到上一個選擇，重新作出抉擇。';
+    $('ending-chapters-button').hidden=!current.completed;
+    $('ending-routes-button').hidden=!current.completed;
+    $('instruction').textContent=current.completed?'已解鎖章節選擇與路線圖鑑，可重玩指定章節。':'可以回到上一個選擇，重新作出抉擇。';
     $('announcement').textContent=`${$('ending-title').textContent}。${plainText(current.conclusion)} ${current.feedback || ''}`;
     requestAnimationFrame(()=>{
-      if(engine.state.current.kind==='ending')($('retry-button').hidden?$('home-button'):$('retry-button')).focus({preventScroll:true});
+      if(engine.state.current.kind==='ending')endingAction().focus({preventScroll:true});
     });
   }
   syncMusic();playEffects(result.effects || []);
@@ -204,7 +209,7 @@ function choose(index) {
   try{
     render(engine.choose(index));
     if(engine.state.current.kind==='text')$('next-button').focus({preventScroll:true});
-    else if(engine.state.current.kind==='ending')($('retry-button').hidden?$('home-button'):$('retry-button')).focus({preventScroll:true});
+    else if(engine.state.current.kind==='ending')endingAction().focus({preventScroll:true});
   }catch(error){handleError(error);}finally{busy=false;}
 }
 function start() {auto=false;dialogueHold?.cancel();updateAuto();render(engine.start());}
@@ -215,15 +220,94 @@ function resume(item) {
 
 function updateAuto() {$('auto-button').textContent=`自動：${auto?'開':'關'}`;$('auto-button').setAttribute('aria-pressed',String(auto));}
 function updateMusic() {$('music-button').textContent=`音樂：${saved.settings.muted?'關':'開'}`;$('music-button').setAttribute('aria-pressed',String(saved.settings.muted));}
+function endingAction() {return engine.state.current.completed ? $('ending-chapters-button') :
+  $('retry-button').hidden ? $('home-button') : $('retry-button');}
 
 function openDialog(title) {
   dialogueHold?.cancel();
   completeText();clearTimeout(autoTimer);
   $('dialog-title').textContent=title;$('dialog-body').replaceChildren();
+  $('menu-dialog').scrollTop=0;
   if(!$('menu-dialog').open)$('menu-dialog').showModal();
 }
 function closeDialog() {$('menu-dialog').close();scheduleAuto();}
 function paragraph(className,text) {const p=document.createElement('p');p.className=className;p.textContent=text;return p;}
+
+function beginReplay(snapshot) {
+  auto=false;dialogueHold?.cancel();updateAuto();closeDialog();
+  render(engine.restore(snapshot),{animate:false});
+  (engine.state.current.kind==='choice' ? $('choices').querySelector('button') : $('next-button'))?.focus({preventScroll:true});
+}
+
+function replayChapter(mapId) {
+  try {beginReplay(replay.startChapter(mapId));} catch(error) {handleError(error);}
+}
+
+function showChapters() {
+  if (!replay.unlocked) return;
+  openDialog('章節選擇');const body=$('dialog-body');
+  body.append(paragraph('modal-note','從所選章節開頭重玩，並接續後續章節。會更新自動存檔；手動存檔及已探索路線會保留。'));
+  story.maps.forEach((map,index)=>{
+    const card=document.createElement('div');card.className='save-slot chapter-slot';
+    const copy=document.createElement('div');copy.className='slot-copy';
+    const heading=document.createElement('h3');heading.textContent=`第${['一','二','三'][index] || index+1}章 · ${map.title}`;
+    const routes=replay.routes.filter(route=>route.mapId===map.id);
+    copy.append(heading,paragraph('',`已探索 ${routes.filter(route=>replay.hasRoute(route.id)).length}／${routes.length} 條路線`));
+    const action=document.createElement('button');action.textContent='重玩本章';
+    action.setAttribute('aria-label',`重玩${map.title}`);action.addEventListener('click',()=>replayChapter(map.id));
+    card.append(copy,action);body.append(card);
+  });
+}
+
+function discoveredRoute(route,index) {
+  const card=document.createElement('details');card.className='route-card';
+  const summary=document.createElement('summary');
+  const title=document.createElement('span');title.className='route-title';
+  title.textContent=`路線 ${String(index+1).padStart(2,'0')} · ${route.completed?'刎頸之交':route.path.at(-1)?.text || '故事落幕'}`;
+  const status=document.createElement('span');status.className='route-state';status.textContent=route.completed?'成功通關':'已探索';
+  summary.append(title,status);card.append(summary);
+  const content=document.createElement('div');content.className='route-content';
+  content.append(paragraph('route-category',route.category),paragraph('route-conclusion',plainText(route.conclusion)));
+  if (route.feedback) content.append(paragraph('route-feedback',`原文回饋：${route.feedback}`));
+  const trail=document.createElement('details');trail.className='route-trail';
+  const trailHeading=document.createElement('summary');trailHeading.textContent='查看本章抉擇順序';
+  const steps=document.createElement('ol');
+  for (const decision of route.path.filter(step=>step.mapId===route.mapId)) {
+    const step=document.createElement('li');step.textContent=`${decision.prompt} → ${decision.text}`;steps.append(step);
+  }
+  trail.append(trailHeading,steps);content.append(trail);
+  const action=document.createElement('button');action.textContent='返回最後抉擇';
+  action.setAttribute('aria-label',`重玩路線 ${index+1}，返回最後抉擇`);
+  action.addEventListener('click',()=>{
+    try {beginReplay(replay.replayRoute(route.id));} catch(error) {handleError(error);}
+  });
+  content.append(action);card.append(content);return card;
+}
+
+function showRoutes() {
+  if (!replay.unlocked) return;
+  openDialog('路線圖鑑');const body=$('dialog-body');
+  body.append(paragraph('library-progress',`已探索 ${replay.progress.endings.length}／${replay.routes.length} 條路線`),
+    paragraph('modal-note','展開已探索路線可查看結局、原文回饋與抉擇順序；未探索路線保留驚喜。重玩會更新自動存檔，手動存檔及圖鑑會保留。'));
+  story.maps.forEach((map,index)=>{
+    const section=document.createElement('section');section.className='route-chapter';
+    const header=document.createElement('div');header.className='route-chapter-heading';
+    const heading=document.createElement('h3');heading.textContent=`第${['一','二','三'][index] || index+1}章 · ${map.title}`;
+    const action=document.createElement('button');action.textContent='重玩本章';
+    action.setAttribute('aria-label',`重玩${map.title}`);action.addEventListener('click',()=>replayChapter(map.id));
+    header.append(heading,action);section.append(header);
+    replay.routes.forEach((route,routeIndex)=>{
+      if (route.mapId!==map.id) return;
+      if (replay.hasRoute(route.id)) section.append(discoveredRoute(route,routeIndex));
+      else {
+        const card=document.createElement('div');card.className='route-card unexplored';
+        card.append(paragraph('route-title',`路線 ${String(routeIndex+1).padStart(2,'0')}`),paragraph('route-state','尚未探索'));
+        section.append(card);
+      }
+    });
+    body.append(section);
+  });
+}
 
 function saveSlot(index) {
   saved.slots[index]=entry(engine.snapshot());persist();
@@ -285,6 +369,8 @@ function updateContinue() {
   $('continue-button').hidden=!saved.auto;
   $('continue-button').textContent=current?.kind==='ending' ?
     (current.completed?'查看通關結局':'返回上次抉擇'):'接續上次進度';
+  $('replay-menu').hidden=!replay.unlocked;
+  $('title-screen').classList.toggle('replay-unlocked',replay.unlocked);
 }
 
 function resumeAuto() {
@@ -328,6 +414,7 @@ async function init() {
     engine=new GameEngine(story);
     let local;try{local=localStorage;}catch{local={getItem(){return null;},setItem(){throw new Error('Storage unavailable');}};}
     saves=new LocalSaves(local);saved=saves.read();
+    replay=new ReplayLibrary(story,saved.progress);
     if(saves.error)toast('之前的存檔未能讀取，你仍可以開始新遊戲。');
     if(saved.auto?.snapshot?.sourceHash!==story.sourceHash)saved.auto=null;
     saved.slots=Array.from({length:3},(_,i)=>saved.slots[i] || null);
@@ -337,13 +424,18 @@ async function init() {
         if(item.snapshot.sourceHash!==story.sourceHash)continue;
         engine.restore(item.snapshot);item.snapshot=engine.snapshot();
         item.preview=entry(item.snapshot).preview;
+        replay.record(item.snapshot);
       } catch { /* A damaged manual save is reported when the player selects it. */ }
     }
-    persist();
+    saved.progress=replay.progress;persist();
     $('start-button').disabled=false;$('start-button').textContent='開始遊戲';
     updateContinue();updateMusic();
     $('start-button').addEventListener('click',start);
     $('continue-button').addEventListener('click',resumeAuto);
+    $('chapter-select-button').addEventListener('click',showChapters);
+    $('route-library-button').addEventListener('click',showRoutes);
+    $('ending-chapters-button').addEventListener('click',showChapters);
+    $('ending-routes-button').addEventListener('click',showRoutes);
     dialogueHold=new DialogueHold($('game-frame'), {
       canStart:()=>started && !busy && !document.hidden && !$('menu-dialog').open && engine.state?.current.kind==='text',
       onChange:updatePlayback,

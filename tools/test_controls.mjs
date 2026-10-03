@@ -5,6 +5,7 @@ import {DialogueHold} from '../dist/dialogue-hold.mjs';
 import {GameEngine, plainText, textRuns} from '../dist/engine.mjs';
 import {LocalSaves} from '../dist/storage.mjs';
 import {PictureRenderer} from '../dist/pictures.mjs';
+import {ReplayLibrary} from '../dist/replay.mjs';
 
 class Clock {
   now = 0;
@@ -237,7 +238,7 @@ async function application(reducedMotion = false, pointerEvents = true, savedVal
   const memory = new Map(), logs = [];
   if(savedValue)memory.set('lianpo-story-v1',JSON.stringify(savedValue));
   const context = vm.createContext({
-    document, GameEngine, plainText, textRuns, LocalSaves, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
+    document, GameEngine, plainText, textRuns, LocalSaves, ReplayLibrary, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
     structuredClone, matchMedia:() => ({matches:reducedMotion}), Audio:AudioStub,
     localStorage:{getItem:key => memory.get(key) || null, setItem:(key, value) => memory.set(key, value)},
     fetch:async url => ({ok:true, json:async() => url.includes('story.json') ? story : assets}),
@@ -445,7 +446,7 @@ release(); clock.advance(10000);
 assert.equal(read('engine.state.current.kind'), 'ending');
 assert.deepEqual(logs, [], 'A dialogue interaction threw an error');
 
-// Only incomplete routes offer another attempt. The unique completed ending returns home.
+// Incomplete routes offer another attempt; completion unlocks chapter and route replay.
 assert.equal(routeEndings.length, 19);
 assert.equal(routeEndings.filter(snapshot => snapshot.state.current.completed).length, 1);
 for (const snapshot of routeEndings) {
@@ -453,12 +454,14 @@ for (const snapshot of routeEndings) {
   read('render(engine.restore(routeEndingSnapshot))'); clock.advance(0);
   const completed = snapshot.state.current.completed;
   assert.equal(nodes.get('retry-button').hidden, completed);
-  assert.equal(document.activeElement, nodes.get(completed ? 'home-button' : 'retry-button'));
+  assert.equal(document.activeElement, nodes.get(completed ? 'ending-chapters-button' : 'retry-button'));
+  assert.equal(nodes.get('ending-chapters-button').hidden,!completed);
+  assert.equal(nodes.get('ending-routes-button').hidden,!completed);
   assert.equal(document.activeElement.focusOptions.preventScroll, true);
   assert.equal(nodes.get('ending-eyebrow').textContent, snapshot.state.current.category);
   if (completed) {
     assert.equal(nodes.get('ending-title').textContent, '全劇終');
-    assert.equal(nodes.get('instruction').textContent, '故事已結束，感謝遊玩。');
+    assert.equal(nodes.get('instruction').textContent, '已解鎖章節選擇與路線圖鑑，可重玩指定章節。');
   }
   emit(nodes.get('retry-button'), 'click');
   assert.equal(read('engine.state.current.kind'), completed ? 'ending' : 'choice', 'Ending retry control has the wrong behavior');
@@ -506,6 +509,8 @@ console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'
 // Actual UI handlers ignore a non-existent option and persist both kinds of ending.
 {
   const ui=await application();
+  assert.equal(ui.nodes.get('replay-menu').hidden,true);
+  ui.read('showChapters();showRoutes()');assert.equal(ui.nodes.get('menu-dialog').open,false,'Replay opened before completion');
   const first=new GameEngine(story);first.start();
   while(first.state.current.kind==='text')first.advance();
   ui.context.choiceSnapshot=first.snapshot();ui.read('render(engine.restore(choiceSnapshot),{animate:false})');
@@ -529,21 +534,72 @@ console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'
   emit(ui.nodes.get('continue-button'),'click');assert.equal(ui.read('engine.state.current.kind'),'ending');
   assert.equal(ui.nodes.get('retry-button').hidden,true);
 
+  // The new replay entry points use actual button handlers and keep manual slots intact.
+  const slotsBefore=ui.read('JSON.stringify(saved.slots)');
+  emit(ui.nodes.get('ending-chapters-button'),'click');
+  assert.equal(ui.nodes.get('dialog-title').textContent,'章節選擇');
+  assert.equal(ui.nodes.get('menu-dialog').open,true);
+  const chapterCards=ui.nodes.get('dialog-body').children.slice(1);
+  assert.equal(chapterCards.length,3);
+  emit(chapterCards[2].querySelector('button'),'click');
+  assert.equal(ui.nodes.get('menu-dialog').open,false);
+  assert.equal(ui.read('engine.state.mapId'),3);
+  assert.equal(ui.read('engine.state.current.eventIndex'),1);
+  assert.equal(ui.read('auto'),false);
+  assert.equal(ui.read('engine.lastChoice'),null);
+  assert.equal(ui.read('JSON.stringify(saved.slots)'),slotsBefore);
+  assert.equal(ui.read('saved.progress.completed'),true);
+  assert.equal(ui.document.activeElement,ui.nodes.get('next-button'));
+  emit(ui.nodes.get('home-button'),'click');
+  assert.equal(ui.nodes.get('replay-menu').hidden,false);
+  assert.equal(ui.nodes.get('continue-button').textContent,'接續上次進度');
+
+  emit(ui.nodes.get('route-library-button'),'click');
+  const routeBody=ui.nodes.get('dialog-body');
+  assert.equal(ui.nodes.get('dialog-title').textContent,'路線圖鑑');
+  assert(routeBody.textContent.includes('已探索 1／19 條路線'));
+  assert(!routeBody.textContent.includes('原文回饋：'),'An unexplored route revealed its feedback');
+  assert(!routeBody.textContent.includes('繆賢和藺相如逃到燕國'),'An unexplored ending was revealed');
+  const completedCard=routeBody.children.at(-1).children.find(node=>node.tag==='details');
+  assert(completedCard.textContent.includes('刎頸之交'));
+  emit(completedCard.querySelector('button'),'click');ui.clock.advance(0);
+  assert.equal(ui.read('engine.state.current.kind'),'choice');
+  assert.equal(ui.read('engine.state.current.eventIndex'),371);
+  assert.equal(ui.read('engine.state.mapId'),3);
+  assert.equal(ui.document.activeElement,ui.nodes.get('choices').children[0]);
+  assert.equal(ui.read('saved.progress.completed'),true);
+  assert.equal(ui.read('JSON.stringify(saved.slots)'),slotsBefore);
+
+  // Unlock survives a new game, reload, and an incomplete route replacing the autosave.
+  ui.read('home()');emit(ui.nodes.get('start-button'),'click');ui.read('home()');
+  assert.equal(ui.nodes.get('replay-menu').hidden,false);
+  ui.context.reloadSaved=ui.read("JSON.parse(localStorage.getItem('lianpo-story-v1'))");
+  const reloaded=await application(false,true,ui.context.reloadSaved);
+  assert.equal(reloaded.nodes.get('replay-menu').hidden,false);
+  assert.equal(reloaded.read('replay.progress.endings.length'),1);
+
   const fixtures=JSON.parse(await readFile(new URL('./fixtures/legacy-saves.json',import.meta.url),'utf8'));
   ui.context.failure=fixtures.punctuatedFailure;ui.read('render(engine.restore(failure),{animate:false})');
   assert.equal(ui.nodes.get('ending-feedback').hidden,false);
   emit(ui.nodes.get('home-button'),'click');assert.equal(ui.nodes.get('continue-button').textContent,'返回上次抉擇');
   emit(ui.nodes.get('continue-button'),'click');assert.equal(ui.read('engine.state.current.kind'),'choice');
   assert.equal(ui.read('engine.state.current.eventIndex'),686);
+  assert.equal(ui.read('saved.progress.completed'),true);
+  assert.equal(ui.read('saved.progress.endings.length'),2);
   assert.equal(ui.logs.length,0);
 
   const oldEntry={snapshot:fixtures.oldFinalCard,time:'2026-10-03T12:00:00.000Z',chapter:'負荊請罪',preview:'全劇終'};
   const restored=await application(false,true,{auto:oldEntry,slots:[null,null,null],settings:{muted:false}});
   assert.equal(restored.nodes.get('continue-button').textContent,'查看通關結局');
+  assert.equal(restored.nodes.get('replay-menu').hidden,false,'Old completed autosave did not unlock replay');
   emit(restored.nodes.get('continue-button'),'click');
   assert.equal(restored.read('engine.state.current.completed'),true);
   assert.equal(restored.nodes.get('retry-button').hidden,true);
   assert.equal(restored.logs.length,0);
+  const manualOnly=await application(false,true,{auto:null,slots:[oldEntry,null,null],settings:{muted:false}});
+  assert.equal(manualOnly.nodes.get('replay-menu').hidden,false,'An old completed manual save did not unlock replay');
+  assert.equal(manualOnly.read('saved.slots.filter(Boolean).length'),1);
 }
 console.log(JSON.stringify({twoOptionShortcut:'passed',completedAutosave:'passed',homeCompletedResume:'passed',
-  failureResumeAtChoice:'passed',oldCompletedAutosaveUpgrade:'passed'},null,2));
+  failureResumeAtChoice:'passed',oldCompletedAutosaveUpgrade:'passed',chapterReplay:'passed',discoveredRouteReplay:'passed',
+  unexploredSpoilers:'hidden',permanentUnlock:'passed',oldManualSaveUnlock:'passed'},null,2));

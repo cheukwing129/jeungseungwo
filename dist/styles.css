@@ -24,6 +24,42 @@ button{-webkit-tap-highlight-color:transparent}
 .history-item.interlude p{text-align:center}
 .ending-feedback{max-width:38rem;margin:0 auto 25px;padding:14px 18px;border:1px solid var(--line);border-radius:4px;background:#101a1940;text-align:left;font-size:1rem;line-height:1.8;color:#dce4d5;white-space:pre-wrap}
 
+/* Completion unlocks two separate replay actions without adding rows to the scene. */
+.title-screen.replay-unlocked .start-menu,.replay-menu{top:auto;bottom:8%;width:41%;min-width:0;gap:8px}
+.replay-menu{position:absolute;right:5%;display:flex;flex-direction:column}
+.replay-menu button{background:var(--deep);color:var(--paper);border-color:var(--gold);font-family:"Noto Serif TC","Songti TC",serif;letter-spacing:.04em}
+.replay-menu button:hover{background:var(--ink)}
+.title-screen.replay-unlocked button{min-height:44px}
+.chapter-slot h3{font-size:1rem;color:var(--gold);margin:0 0 .5rem;line-height:1.5}
+.library-progress{color:var(--gold);font-size:1.1rem;margin:0 0 .75rem}
+.route-chapter+.route-chapter{margin-top:1.5rem}
+.route-chapter-heading{display:flex;justify-content:space-between;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.route-chapter-heading h3{font-size:1rem;color:var(--gold);line-height:1.5;margin:0}
+.route-chapter-heading button{flex-shrink:0;font-size:.875rem;padding:.5rem .75rem}
+.route-card{border:1px solid var(--line);border-radius:4px;margin-bottom:.5rem;background:var(--ink);overflow-wrap:anywhere}
+.route-card>summary{cursor:pointer;padding:.75rem;line-height:1.6}
+.route-card summary:focus-visible{outline:3px solid var(--jade);outline-offset:-3px}
+.route-title{font-size:.9375rem;line-height:1.6}
+.route-state{display:block;color:var(--jade);font-size:.8125rem;line-height:1.5;margin:.25rem 0 0}
+.route-content{border-top:1px solid var(--line);padding:1rem}
+.route-category{color:var(--gold);font-size:.875rem;margin:0 0 .75rem}
+.route-conclusion{white-space:pre-wrap;line-height:1.8;margin:0 0 .75rem}
+.route-feedback{border-left:2px solid var(--gold);padding-left:.75rem;font-size:.9375rem;line-height:1.8;margin:0 0 1rem}
+.route-trail{font-size:.875rem;line-height:1.7;margin:0 0 1rem}
+.route-trail summary{cursor:pointer;color:var(--jade);padding:.25rem 0}
+.route-trail ol{padding-left:1.5rem;margin:.5rem 0 0}
+.route-trail li+li{margin-top:.5rem}
+.route-content button{width:100%}
+.route-card.unexplored{padding:.75rem}
+.unexplored p{margin:0}
+@media(max-width:600px){
+  .replay-menu button{font-size:1rem;padding:.5rem .3rem}
+  .chapter-slot{align-items:flex-start;flex-direction:column;gap:.75rem}
+  .chapter-slot button{width:100%}
+  .route-chapter-heading{flex-wrap:wrap}
+  .route-content{padding:.75rem}
+}
+
 /* Choices stay inside the scene and do not push the dialogue or page down. */
 .scene-choices{position:absolute;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:#07110bb8;backdrop-filter:blur(3px);cursor:default}
 .choice-dialog{width:min(100%,540px);max-height:100%;overflow:auto;padding:18px;border:1px solid #b29a67;border-radius:7px;background:#1f3028f5;box-shadow:0 12px 36px #0007}

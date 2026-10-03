@@ -5,7 +5,7 @@ export class LocalSaves {
   read() {
     try {
       const raw = this.storage.getItem(STORAGE_KEY);
-      if (!raw) return {auto:null,slots:[null,null,null],settings:{muted:false}};
+      if (!raw) return {auto:null,slots:[null,null,null],settings:{muted:false},progress:null};
       const value = JSON.parse(raw);
       if (!value || typeof value !== 'object' || !Array.isArray(value.slots)) throw new Error('存檔資料損壞');
       const normalize = item => {
@@ -16,10 +16,10 @@ export class LocalSaves {
         }
         return item;
       };
-      return {auto:normalize(value.auto),slots:value.slots.slice(0,3).map(normalize),settings:{muted:value.settings?.muted === true}};
+      return {auto:normalize(value.auto),slots:value.slots.slice(0,3).map(normalize),settings:{muted:value.settings?.muted === true},progress:value.progress || null};
     } catch (error) {
       this.error = error;
-      return {auto:null,slots:[null,null,null],settings:{muted:false}};
+      return {auto:null,slots:[null,null,null],settings:{muted:false},progress:null};
     }
   }
   write(value) {

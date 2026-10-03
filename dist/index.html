@@ -7,9 +7,9 @@
   <meta name="description" content="扮演藺相如，在完璧歸趙、澠池之會、負荊請罪中作出歷史抉擇。">
   <title>廉頗藺相如列傳</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23182423'/%3E%3Ccircle cx='16' cy='16' r='10' fill='%238eb49d'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23182423'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="./styles.css?v=20261003-text-flow">
+  <link rel="stylesheet" href="./styles.css?v=20261003-replay">
   <link rel="preload" as="image" href="./assets/d6049d3421020e17.jpg">
-  <script type="module" src="./app.mjs?v=20261003-text-flow"></script>
+  <script type="module" src="./app.mjs?v=20261003-replay"></script>
 </head>
 <body>
   <a class="skip-link" href="#game">前往遊戲</a>
@@ -40,6 +40,10 @@
             <div class="start-menu">
               <button class="primary" id="start-button" disabled>載入中</button>
               <button id="continue-button" disabled hidden>接續上次進度</button>
+            </div>
+            <div class="replay-menu" id="replay-menu" hidden>
+              <button id="chapter-select-button">章節選擇</button>
+              <button id="route-library-button">路線圖鑑</button>
             </div>
           </section>
           <section class="scene-choices" id="scene-choices" aria-labelledby="choice-heading" hidden>
@@ -72,6 +76,8 @@
           <p class="ending-feedback" id="ending-feedback" hidden></p>
           <div class="ending-actions">
             <button class="primary" id="retry-button">重新抉擇</button>
+            <button class="primary" id="ending-chapters-button" hidden>章節選擇</button>
+            <button id="ending-routes-button" hidden>路線圖鑑</button>
             <button id="home-button">回到首頁</button>
           </div>
         </section>
