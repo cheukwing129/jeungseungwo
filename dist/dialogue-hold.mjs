@@ -17,6 +17,8 @@ export class DialogueHold {
     this.active = false;
     this.blockClick = false;
     this.timer = 0;
+    this.keyboard = false;
+    this.blockedSpace = false;
 
     element.addEventListener('pointerdown', event => this.begin(event));
     element.addEventListener('pointerup', event => {
@@ -43,6 +45,8 @@ export class DialogueHold {
       if (this.accepts(event.target) && this.canStart()) this.onClick();
     }, {capture:true});
     const owner = element.ownerDocument;
+    owner.addEventListener('keydown', event => this.keyDown(event), {capture:true});
+    owner.addEventListener('keyup', event => this.keyUp(event), {capture:true});
     // Avoid treating compatibility mouse events after a touch release as a new press.
     element.addEventListener('mousedown', event => {
       if (!owner.defaultView.PointerEvent && !this.pointer) this.begin({pointerId:-1, pointerType:'mouse', isPrimary:true,
@@ -73,7 +77,7 @@ export class DialogueHold {
   }
 
   begin(event) {
-    if (this.pointer || event.isPrimary === false || event.button !== 0) return;
+    if (this.pointer || this.keyboard || event.isPrimary === false || event.button !== 0) return;
     this.blockClick = false;
     if (!this.accepts(event.target) || !this.canStart()) return;
     this.pointer = {id:event.pointerId, type:event.pointerType || 'mouse', x:event.clientX, y:event.clientY};
@@ -86,10 +90,38 @@ export class DialogueHold {
     }, this.holdDelay);
   }
 
+  consume(event) {event.preventDefault();event.stopImmediatePropagation();}
+
+  keyDown(event) {
+    if (event.code !== 'Space' || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    // A new physical press also recovers after a keyup lost during a focus change.
+    if (!event.repeat && !this.keyboard) this.blockedSpace = false;
+    if (this.keyboard || this.blockedSpace) {this.consume(event);return;}
+    if (event.repeat || !this.accepts(event.target) || !this.canStart()) return;
+    this.consume(event);
+    if (this.pointer) return;
+    this.keyboard = true;
+    this.timer = this.setTimer(() => {
+      this.timer = 0;
+      if (!this.keyboard || !this.canStart()) {this.cancel();return;}
+      this.active = true;this.onChange(true);
+    },this.holdDelay);
+  }
+
+  keyUp(event) {
+    if (event.code !== 'Space' || (!this.keyboard && !this.blockedSpace)) return;
+    this.consume(event);
+    const click = this.keyboard && !this.active && this.canStart();
+    this.cancel(false);this.blockedSpace = false;
+    if (click) this.onClick();
+  }
+
   cancel(suppressClick = true) {
     this.clearTimer(this.timer);
     this.timer = 0;
     const pointer = this.pointer, wasActive = this.active;
+    if (this.keyboard) this.blockedSpace = true;
+    this.keyboard = false;
     this.pointer = null;
     this.active = false;
     // Ignore the compatibility click generated when a long press is released.

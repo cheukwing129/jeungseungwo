@@ -1,13 +1,15 @@
 import {GameEngine,plainText,textRuns} from './engine.mjs?v=20261003-text-flow';
-import {LocalSaves} from './storage.mjs?v=20261003-replay';
-import {ReplayLibrary} from './replay.mjs?v=20261003-replay';
+import {LocalSaves} from './storage.mjs?v=20261003-reliability';
+import {ReplayLibrary} from './replay.mjs?v=20261003-reliability';
+import {AutosaveScheduler} from './autosave.mjs?v=20261003-reliability';
 import {PictureRenderer} from './pictures.mjs';
-import {DialogueHold} from './dialogue-hold.mjs?v=20261003-desktop';
+import {DialogueHold} from './dialogue-hold.mjs?v=20261003-reliability';
 
 const $ = id => document.getElementById(id);
-let story, assets, engine, saved, saves, dialogueHold, replay;
+let story, assets, engine, saved, saves, dialogueHold, replay, autosave;
 let typing = null, typeTimer = 0, autoTimer = 0, auto = false, toastTimer = 0;
 let started = false, busy = false, storageWarned = false;
+let renderedMapId = null, rendering = false, pendingAnnouncement = '', activeSlotsMode = null;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const music = new Audio(); music.preload = 'none'; music.loop = true;
 let musicKey = ''; const sounds = new Set();
@@ -18,11 +20,13 @@ function toast(message) {
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>{$('toast').hidden=true;},3500);
 }
 
-function persist() {
-  if (!saves.write(saved) && !storageWarned) {
+function persist(write) {
+  const success = write();
+  if (!success && !storageWarned) {
     storageWarned = true;
     toast('瀏覽器未能儲存進度；本次仍可繼續遊玩。');
   }
+  return success;
 }
 
 function entry(snapshot) {
@@ -33,11 +37,28 @@ function entry(snapshot) {
       plainText(formatDialogue(recent?.speaker || '',recent?.text || '等待你的抉擇',recent?.interlude).text).trim().slice(0,48)};
 }
 
-function autosave() {
-  if (!engine.state) return;
+function saveCurrentProgress() {
+  if (!engine.state) return true;
   const snapshot = engine.snapshot();
   replay.record(snapshot);saved.progress = replay.progress;
-  saved.auto = entry(snapshot);persist();
+  saved.auto = entry(snapshot);
+  const autoSaved = persist(() => saves.writeAuto(saved.auto));
+  const progressSaved = persist(() => saves.writeProgress(replay.progress));
+  return autoSaved && progressSaved;
+}
+
+function announce(message) {pendingAnnouncement = message;publishAnnouncement();}
+function publishAnnouncement() {
+  if (rendering) return;
+  const region = $('announcement');
+  if (dialogueHold?.active) {
+    if (region.getAttribute('aria-live') !== 'off') {
+      region.setAttribute('aria-live','off');region.textContent = '';
+    }
+    return;
+  }
+  region.setAttribute('aria-live','polite');
+  if (region.textContent !== pendingAnnouncement) region.textContent = pendingAnnouncement;
 }
 
 function assetUrl(key) { return assets[key]?.src || null; }
@@ -70,6 +91,7 @@ function updatePlayback() {
     clearTimeout(typeTimer);
     typeTimer=setTimeout(typing.tick,26/playbackRate());
   } else scheduleAuto();
+  publishAnnouncement();
 }
 
 function stopTyping() { clearTimeout(typeTimer); typeTimer=0; typing=null; }
@@ -94,8 +116,8 @@ function renderText(speaker,text,animate,interlude=false) {
   $('dialogue').classList.toggle('interlude',presentation.centered);
   $('speaker').hidden=presentation.centered;
   $('speaker').textContent = `${speaker || '旁白'}${engine.state?.hypothetical?' · 假設情節':''}`;
-  $('announcement').textContent = (engine.state?.hypothetical?'假設情節。':'')+
-    (presentation.centered ? plainText(text) : `${speaker || '旁白'}：${plainText(text)}`);
+  announce((engine.state?.hypothetical?'假設情節。':'')+
+    (presentation.centered ? plainText(text) : `${speaker || '旁白'}：${plainText(text)}`));
   const target = $('story-text'); target.replaceChildren();
   const runs=textRuns(text),spans=[];
   for (const run of runs) {
@@ -138,9 +160,17 @@ function scheduleAuto({fastTextDuration=0}={}) {
   autoTimer=setTimeout(next,delay);
 }
 
-function render(result,{animate=true}={}) {
+function render(result,options={}) {
+  rendering = true;
+  try {renderState(result,options);}
+  finally {rendering = false;publishAnnouncement();}
+}
+
+function renderState(result,{animate=true,saveNow=false}={}) {
   clearTimeout(autoTimer);
   const state=result.state,current=state.current;
+  const chapterChanged = !started || renderedMapId !== state.mapId;
+  renderedMapId = state.mapId;
   if(current.kind!=='text')dialogueHold?.cancel();
   started=true;
   $('title-screen').hidden=true;
@@ -161,7 +191,7 @@ function render(result,{animate=true}={}) {
   pictureRenderer.render(state.pictures, assets, {width:story.width, height:story.height});
   if(current.kind==='text') {
     renderText(current.speaker,current.text,animate,current.interlude);
-    $('instruction').textContent=(state.hypothetical?'假設情節，並非史實。':'')+'點擊或按空白鍵繼續；按住場景、對話框或「繼續」可五倍速快讀，放開停止。';
+    $('instruction').textContent=(state.hypothetical?'假設情節，並非史實。':'')+'點擊或按空白鍵繼續；按住場景、對話框、「繼續」或空白鍵可五倍速快讀，放開停止。';
   } else if(current.kind==='choice') {
     const last=[...state.history].reverse().find(item=>!item.choice);
     renderText(last?.speaker || '',last?.text || '',false,last?.interlude);
@@ -173,7 +203,9 @@ function render(result,{animate=true}={}) {
       const label=document.createElement('span');label.textContent=choice.text;
       button.append(badge,label);button.addEventListener('click',()=>choose(index));choices.append(button);
     });
-    $('instruction').textContent=`按原文作選擇。亦可按數字鍵 ${current.choices.map((_,index)=>index+1).join('、')} 選擇。`;
+    const shortcuts=current.choices.slice(0,9).map((_,index)=>index+1).join('、');
+    $('instruction').textContent=`按原文作選擇。亦可按數字鍵 ${shortcuts} 選擇。`;
+    announce(`${$('choice-heading').textContent}。${current.choices.map((choice,index)=>`${index+1}：${choice.text}`).join('。')}`);
     requestAnimationFrame(()=>{if(!$('scene-choices').hidden)choices.querySelector('button')?.focus({preventScroll:true});});
   } else {
     stopTyping();
@@ -186,13 +218,13 @@ function render(result,{animate=true}={}) {
     $('ending-chapters-button').hidden=!current.completed;
     $('ending-routes-button').hidden=!current.completed;
     $('instruction').textContent=current.completed?'已解鎖章節選擇與路線圖鑑，可重玩指定章節。':'可以回到上一個選擇，重新作出抉擇。';
-    $('announcement').textContent=`${$('ending-title').textContent}。${plainText(current.conclusion)} ${current.feedback || ''}`;
+    announce(`${$('ending-title').textContent}。${plainText(current.conclusion)} ${current.feedback || ''}`);
     requestAnimationFrame(()=>{
       if(engine.state.current.kind==='ending')endingAction().focus({preventScroll:true});
     });
   }
   syncMusic();playEffects(result.effects || []);
-  autosave();
+  autosave.mark({immediate:saveNow || chapterChanged || current.kind!=='text'});
 }
 
 function handleError(error) {console.error(error);toast(error.message || '暫時未能繼續，請讀取存檔或重新開始。');}
@@ -207,14 +239,14 @@ function choose(index) {
   if(busy || $('menu-dialog').open) return;
   busy=true;
   try{
-    render(engine.choose(index));
+    render(engine.choose(index),{saveNow:true});
     if(engine.state.current.kind==='text')$('next-button').focus({preventScroll:true});
     else if(engine.state.current.kind==='ending')endingAction().focus({preventScroll:true});
   }catch(error){handleError(error);}finally{busy=false;}
 }
-function start() {auto=false;dialogueHold?.cancel();updateAuto();render(engine.start());}
+function start() {auto=false;dialogueHold?.cancel();updateAuto();render(engine.start(),{saveNow:true});}
 function resume(item) {
-  try{auto=false;dialogueHold?.cancel();updateAuto();render(engine.restore(item.snapshot),{animate:false});closeDialog();return true;}
+  try{auto=false;dialogueHold?.cancel();updateAuto();render(engine.restore(item.snapshot),{animate:false,saveNow:true});closeDialog();return true;}
   catch(error){handleError(error);return false;}
 }
 
@@ -226,16 +258,17 @@ function endingAction() {return engine.state.current.completed ? $('ending-chapt
 function openDialog(title) {
   dialogueHold?.cancel();
   completeText();clearTimeout(autoTimer);
+  autosave.flush();activeSlotsMode = null;
   $('dialog-title').textContent=title;$('dialog-body').replaceChildren();
   $('menu-dialog').scrollTop=0;
   if(!$('menu-dialog').open)$('menu-dialog').showModal();
 }
-function closeDialog() {$('menu-dialog').close();scheduleAuto();}
+function closeDialog() {activeSlotsMode = null;$('menu-dialog').close();scheduleAuto();}
 function paragraph(className,text) {const p=document.createElement('p');p.className=className;p.textContent=text;return p;}
 
 function beginReplay(snapshot) {
   auto=false;dialogueHold?.cancel();updateAuto();closeDialog();
-  render(engine.restore(snapshot),{animate:false});
+  render(engine.restore(snapshot),{animate:false,saveNow:true});
   (engine.state.current.kind==='choice' ? $('choices').querySelector('button') : $('next-button'))?.focus({preventScroll:true});
 }
 
@@ -310,14 +343,17 @@ function showRoutes() {
 }
 
 function saveSlot(index) {
-  saved.slots[index]=entry(engine.snapshot());persist();
-  if(saves.error)return;
+  autosave.flush();
+  const value=entry(engine.snapshot());
+  if(!persist(()=>saves.writeSlot(index,value)))return;
+  saved.slots[index]=value;
   toast(`已儲存至存檔 ${index+1}`);showSlots('save');
 }
 
 function showSlots(mode) {
   if(!engine)return;
   openDialog(mode==='save'?'儲存進度':'讀取進度');
+  refreshSaved();activeSlotsMode = mode;
   const body=$('dialog-body');
   body.append(paragraph('modal-note','進度只儲存在目前的瀏覽器；讀檔會回到儲存時的對話或選項。'));
   const entries=mode==='load'?[{label:'自動存檔',value:saved.auto,index:-1}]:[];
@@ -332,10 +368,17 @@ function showSlots(mode) {
       time.textContent=new Intl.DateTimeFormat('zh-HK',{timeZone:'Asia/Hong_Kong',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(slot.value.time));text.append(time);
     } else text.append(paragraph('','尚未儲存'));
     const action=document.createElement('button');
+    action.dataset.slot=String(slot.index);
     action.textContent=mode==='load'?'讀取':slot.value?'覆寫':'儲存';
     action.setAttribute('aria-label',`${action.textContent}${slot.label}`);
     action.disabled=mode==='load'?!slot.value:!started || engine.state.ended;
-    action.addEventListener('click',()=>mode==='load'?resume(slot.value):saveSlot(slot.index));
+    action.addEventListener('click',()=>{
+      if(mode!=='load'){saveSlot(slot.index);return;}
+      refreshSaved();
+      const value=slot.index===-1?saved.auto:saved.slots[slot.index];
+      if(value)resume(value);
+      else {toast('這個欄位目前沒有可讀取的存檔。');showSlots(mode);}
+    });
     card.append(text,action);body.append(card);
   }
 }
@@ -355,6 +398,7 @@ function showHistory() {
 
 function home() {
   dialogueHold?.cancel();
+  autosave.flush();
   stopTyping();clearTimeout(autoTimer);auto=false;updateAuto();started=false;
   $('title-screen').hidden=false;$('dialogue-panel').hidden=true;$('ending').hidden=true;$('scene-choices').hidden=true;
   $('return-button').hidden=true;$('save-button').disabled=true;$('history-button').disabled=true;
@@ -374,10 +418,11 @@ function updateContinue() {
 }
 
 function resumeAuto() {
+  refreshSaved();
   if(!saved.auto)return;
   if(!resume(saved.auto))return;
   if(engine.state?.current.kind==='ending' && !engine.state.current.completed && engine.lastChoice) {
-    render(engine.retry(),{animate:false});
+    render(engine.retry(),{animate:false,saveNow:true});
   }
 }
 
@@ -394,16 +439,37 @@ function registerTools() {
   const context=document.modelContext;
   if(!context?.registerTool)return;
   const lifecycle=new AbortController();
+  const maximumOptions=Math.max(1,...story.maps.flatMap(map=>map.events.filter(event=>event.code===101).map(event=>event.choices.length)));
   const tools=[
     {name:'read_game_state',title:'讀取目前劇情',description:'Read the visible dialogue, current chapter and choices without changing the game.',annotations:{readOnlyHint:true,untrustedContentHint:false},
       inputSchema:{type:'object',properties:{},additionalProperties:false},execute(input){if(!input || Object.keys(input).length)throw new Error('不需要輸入參數。');return {started,chapter:started?engine.maps.get(engine.state.mapId).title:null,current:started?engine.state.current:null};}},
     {name:'advance_game_dialogue',title:'繼續劇情',description:'Finish the current text animation, or advance to the next dialogue using the same action as the Continue button.',annotations:{readOnlyHint:false,untrustedContentHint:false},
       inputSchema:{type:'object',properties:{},additionalProperties:false},execute(input){if(!input || Object.keys(input).length)throw new Error('不需要輸入參數。');if(!started || engine.state.current.kind!=='text' || $('menu-dialog').open)throw new Error('目前不能繼續對話。');next();return {current:engine.state.current};}},
     {name:'choose_story_option',title:'選擇劇情選項',description:'Choose one of the currently visible numbered story options, following its original branch.',annotations:{readOnlyHint:false,untrustedContentHint:false},
-      inputSchema:{type:'object',properties:{option:{type:'integer',minimum:1,maximum:3}},required:['option'],additionalProperties:false},execute(input){if(!input || Object.keys(input).some(k=>k!=='option') || !Number.isInteger(input.option) || engine.state?.current.kind!=='choice' || !engine.state.current.choices[input.option-1] || $('menu-dialog').open)throw new Error('請提供目前選項的編號。');choose(input.option-1);return {current:engine.state.current};}}
+      inputSchema:{type:'object',properties:{option:{type:'integer',minimum:1,maximum:maximumOptions}},required:['option'],additionalProperties:false},execute(input){if(!input || Object.keys(input).some(k=>k!=='option') || !Number.isInteger(input.option) || engine.state?.current.kind!=='choice' || !engine.state.current.choices[input.option-1] || $('menu-dialog').open)throw new Error('請提供目前選項的編號。');choose(input.option-1);return {current:engine.state.current};}}
   ];
   for(const tool of tools)try{Promise.resolve(context.registerTool(tool,{signal:lifecycle.signal})).catch(()=>{});}catch{}
   addEventListener('pagehide',()=>lifecycle.abort(),{once:true});
+}
+
+function refreshSaved() {
+  saved=saves.read();replay.merge(saved.progress);saved.progress=replay.progress;
+  if(saved.auto?.snapshot?.sourceHash!==story.sourceHash)saved.auto=null;
+  updateContinue();updateMusic();
+}
+
+function syncSaved(event) {
+  if(event && !saves.relevantKey(event.key))return;
+  const mode=activeSlotsMode, focusedSlot=document.activeElement?.dataset?.slot;
+  refreshSaved();syncMusic();
+  if(saved.settings.muted){for(const sound of sounds)sound.pause();sounds.clear();}
+  if(mode && $('menu-dialog').open) {
+    showSlots(mode);
+    for(const card of $('dialog-body').children) {
+      const action=card.querySelector('button');
+      if(focusedSlot!==undefined && action?.dataset.slot===focusedSlot && !action.disabled)action.focus({preventScroll:true});
+    }
+  }
 }
 
 async function init() {
@@ -413,8 +479,10 @@ async function init() {
     [story,assets]=await Promise.all(responses.map(response=>response.json()));
     engine=new GameEngine(story);
     let local;try{local=localStorage;}catch{local={getItem(){return null;},setItem(){throw new Error('Storage unavailable');}};}
-    saves=new LocalSaves(local);saved=saves.read();
-    replay=new ReplayLibrary(story,saved.progress);
+    replay=new ReplayLibrary(story);
+    saves=new LocalSaves(local,{sourceHash:story.sourceHash,endingIds:replay.routes.map(route=>route.id)});saved=saves.read();
+    replay.merge(saved.progress);
+    autosave=new AutosaveScheduler(saveCurrentProgress);
     if(saves.error)toast('之前的存檔未能讀取，你仍可以開始新遊戲。');
     if(saved.auto?.snapshot?.sourceHash!==story.sourceHash)saved.auto=null;
     saved.slots=Array.from({length:3},(_,i)=>saved.slots[i] || null);
@@ -427,7 +495,7 @@ async function init() {
         replay.record(item.snapshot);
       } catch { /* A damaged manual save is reported when the player selects it. */ }
     }
-    saved.progress=replay.progress;persist();
+    saved.progress=replay.progress;persist(()=>saves.writeProgress(replay.progress));
     $('start-button').disabled=false;$('start-button').textContent='開始遊戲';
     updateContinue();updateMusic();
     $('start-button').addEventListener('click',start);
@@ -444,7 +512,8 @@ async function init() {
     $('game-frame').addEventListener('dragstart',event=>event.preventDefault());
     $('auto-button').addEventListener('click',()=>{auto=!auto;updateAuto();if(auto)completeText();scheduleAuto();});
     $('music-button').addEventListener('click',()=>{
-      saved.settings.muted=!saved.settings.muted;persist();updateMusic();syncMusic();
+      refreshSaved();saved.settings.muted=!saved.settings.muted;
+      persist(()=>saves.writeMuted(saved.settings.muted));updateMusic();syncMusic();
       if(saved.settings.muted){for(const sound of sounds)sound.pause();sounds.clear();}
     });
     $('fullscreen-button').addEventListener('click',async()=>{
@@ -455,22 +524,25 @@ async function init() {
     $('history-button').addEventListener('click',showHistory);
     $('retry-button').addEventListener('click',()=>{
       if(engine.state.current.kind!=='ending' || engine.state.current.completed || !engine.lastChoice)return;
-      auto=false;updateAuto();render(engine.retry(),{animate:false});
+      auto=false;updateAuto();render(engine.retry(),{animate:false,saveNow:true});
     });
     $('home-button').addEventListener('click',home);
     $('return-button').addEventListener('click',confirmHome);
     $('dialog-close').addEventListener('click',closeDialog);
-    $('menu-dialog').addEventListener('close',scheduleAuto);
+    $('menu-dialog').addEventListener('close',()=>{activeSlotsMode=null;scheduleAuto();});
     document.addEventListener('keydown',event=>{
-      if($('menu-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
+      if(event.defaultPrevented || $('menu-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
       if(event.target.closest('input,select,textarea,a'))return;
-      if(started && engine.state.current.kind==='choice' && /^[1-3]$/.test(event.key)){
+      if(started && engine.state.current.kind==='choice' && /^[1-9]$/.test(event.key)){
         event.preventDefault();
         const index=Number(event.key)-1;if(engine.state.current.choices[index])choose(index);
       }
-      else if(!event.target.closest('button') && started && (event.code==='Space' || event.key==='Enter')){event.preventDefault();next();}
+      else if(!event.target.closest('button') && started && event.key==='Enter'){event.preventDefault();next();}
     });
-    document.addEventListener('visibilitychange',()=>{if(document.hidden){music.pause();clearTimeout(autoTimer);for(const sound of sounds)sound.pause();}else{syncMusic();scheduleAuto();}});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden){autosave.flush();music.pause();clearTimeout(autoTimer);for(const sound of sounds)sound.pause();}else{syncSaved();scheduleAuto();}});
+    addEventListener('pagehide',()=>autosave.flush());
+    addEventListener('pageshow',()=>syncSaved());
+    addEventListener('storage',syncSaved);
     registerTools();
   } catch(error) {
     console.error(error);$('load-error').hidden=false;

@@ -86,8 +86,8 @@ assert.equal(damaged.unlocked,true);assert.deepEqual(damaged.progress.endings,['
 assert.equal(new ReplayLibrary(story,{sourceHash:story.sourceHash,endings:'bad'}).unlocked,false);
 
 const memory=new Map(), storage={getItem:key=>memory.get(key)||null,setItem:(key,value)=>memory.set(key,value)};
-const saves=new LocalSaves(storage), item={snapshot:first.snapshot(),time:new Date().toISOString(),chapter:'完璧歸趙',preview:'序章'};
-saves.write({auto:item,slots:[item,null,null],settings:{muted:true},progress:migrated.progress});
+const saves=new LocalSaves(storage,{sourceHash:story.sourceHash,endingIds:library.routes.map(route=>route.id)}), item={snapshot:first.snapshot(),time:new Date().toISOString(),chapter:'完璧歸趙',preview:'序章'};
+saves.writeAuto(item);saves.writeSlot(0,item);saves.writeMuted(true);saves.writeProgress(migrated.progress);
 const readback=saves.read();assert.deepEqual(readback.slots,[item,null,null]);assert.equal(readback.settings.muted,true);
 assert.equal(new ReplayLibrary(story,readback.progress).unlocked,true);
 assert.deepEqual(new ReplayLibrary(story,readback.progress).progress,migrated.progress);

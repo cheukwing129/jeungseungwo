@@ -47,6 +47,17 @@ export class ReplayLibrary {
   get unlocked() {return this.progress.completed;}
   hasRoute(id) {return this.progress.endings.includes(id);}
 
+  merge(progress) {
+    if (progress?.sourceHash !== this.story.sourceHash) return;
+    if (Array.isArray(progress.endings)) for (const id of progress.endings) {
+      if (this.byId.has(id) && !this.hasRoute(id)) this.progress.endings.push(id);
+    }
+    if (progress.completed === true || this.hasRoute(this.completedRoute.id)) {
+      this.progress.completed = true;
+      if (!this.hasRoute(this.completedRoute.id)) this.progress.endings.push(this.completedRoute.id);
+    }
+  }
+
   record(snapshot) {
     const state = snapshot?.state, current = state?.current;
     if (snapshot?.sourceHash !== this.story.sourceHash || !state?.ended || current?.kind !== 'ending') return false;

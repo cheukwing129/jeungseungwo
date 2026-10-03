@@ -6,6 +6,7 @@ import {GameEngine, plainText, textRuns} from '../dist/engine.mjs';
 import {LocalSaves} from '../dist/storage.mjs';
 import {PictureRenderer} from '../dist/pictures.mjs';
 import {ReplayLibrary} from '../dist/replay.mjs';
+import {AutosaveScheduler} from '../dist/autosave.mjs';
 
 class Clock {
   now = 0;
@@ -75,6 +76,7 @@ class NodeStub extends EventTarget {
   }
   closest(selector) { return this.matches(selector) ? this : this.parent?.closest(selector) || null; }
   setAttribute(name, value) { this.attributes[name] = String(value); }
+  getAttribute(name) { return this.attributes[name] ?? null; }
   removeAttribute(name) { delete this.attributes[name]; }
   querySelector(selector) {
     for (const child of this.children) {
@@ -98,7 +100,7 @@ class NodeStub extends EventTarget {
 }
 
 function surfaces(pointerEvents = true) {
-  const owner = new EventTarget();
+  const owner = new NodeStub(null,'document');
   owner.hidden = false;
   owner.defaultView = new EventTarget();
   if (pointerEvents) owner.defaultView.PointerEvent = class {};
@@ -209,7 +211,7 @@ const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf
 const app = await readFile(new URL('../dist/app.mjs', import.meta.url), 'utf8');
 
 // Execute the actual application handlers against deterministic input and timers.
-async function application(reducedMotion = false, pointerEvents = true, savedValue = null) {
+async function application(reducedMotion = false, pointerEvents = true, savedValue = null, sharedMemory = new Map(), testStory = story) {
   const clock = new Clock(), {owner:document} = surfaces(pointerEvents), nodes = new Map(), stack = [];
   const voidTags = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
   for (const match of html.matchAll(/<(\/?)([a-z][a-z0-9-]*)(\s[^<>]*?)?>/gi)) {
@@ -228,20 +230,25 @@ async function application(reducedMotion = false, pointerEvents = true, savedVal
   document.querySelectorAll = () => chapters;
   class ImageStub extends NodeStub { constructor() { super(document, 'img'); } }
   class AudioStub extends EventTarget { play() { return Promise.resolve(); } pause() {} }
+  const registeredTools=new Map();
+  document.modelContext={registerTool:tool=>registeredTools.set(tool.name,tool)};
   class HoldWithClock extends DialogueHold {
     constructor(element, options) { super(element, {...options, setTimer:clock.set, clearTimer:clock.clear}); }
+  }
+  class AutosaveWithClock extends AutosaveScheduler {
+    constructor(save, options) { super(save, {...options, setTimer:clock.set, clearTimer:clock.clear}); }
   }
   class PicturesWithClock extends PictureRenderer {
     constructor(layer, options) { super(layer, {...options, createImage:() => new ImageStub(),
       requestFrame:callback => clock.set(callback, 0), setTimer:clock.set}); }
   }
-  const memory = new Map(), logs = [];
+  const memory = sharedMemory, logs = [], writes = [];
   if(savedValue)memory.set('lianpo-story-v1',JSON.stringify(savedValue));
   const context = vm.createContext({
-    document, GameEngine, plainText, textRuns, LocalSaves, ReplayLibrary, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
-    structuredClone, matchMedia:() => ({matches:reducedMotion}), Audio:AudioStub,
-    localStorage:{getItem:key => memory.get(key) || null, setItem:(key, value) => memory.set(key, value)},
-    fetch:async url => ({ok:true, json:async() => url.includes('story.json') ? story : assets}),
+    document, GameEngine, plainText, textRuns, LocalSaves, ReplayLibrary, AutosaveScheduler:AutosaveWithClock, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
+    structuredClone, AbortController, matchMedia:() => ({matches:reducedMotion}), Audio:AudioStub,
+    localStorage:{getItem:key => memory.get(key) || null, setItem:(key, value) => {writes.push({key,value});memory.set(key, value);}},
+    fetch:async url => ({ok:true, json:async() => url.includes('story.json') ? testStory : assets}),
     setTimeout:clock.set, clearTimeout:clock.clear, requestAnimationFrame:callback => clock.set(callback, 0),
     addEventListener:document.defaultView.addEventListener.bind(document.defaultView),
     console:{error:error => logs.push(error)},
@@ -250,7 +257,7 @@ async function application(reducedMotion = false, pointerEvents = true, savedVal
   await context.ready;
   assert.deepEqual(logs, [], 'Application initialization failed');
   const read = expression => vm.runInContext(expression, context);
-  return {clock, document, nodes, context, read, logs};
+  return {clock, document, nodes, context, read, logs, memory, writes, registeredTools};
 }
 
 const {clock, document, nodes, context, read, logs} = await application();
@@ -526,8 +533,8 @@ console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'
     if(ui.read('engine.state.current.kind')==='choice')ui.read('choose(answers[`${engine.state.mapId}:${engine.state.current.eventIndex}`])');
     else ui.read('render(engine.advance(),{animate:false})');
   }
-  assert.equal(ui.read("JSON.parse(localStorage.getItem('lianpo-story-v1')).auto.snapshot.state.current.completed"),true);
-  assert.equal(ui.read("JSON.parse(localStorage.getItem('lianpo-story-v1')).auto.snapshot.state.ended"),true);
+  assert.equal(ui.read('saves.read().auto.snapshot.state.current.completed'),true);
+  assert.equal(ui.read('saves.read().auto.snapshot.state.ended'),true);
   assert(ui.nodes.get('ending-text').textContent.includes('刎頸之交'));
   assert.equal(ui.nodes.get('ending-feedback').hidden,true);
   emit(ui.nodes.get('home-button'),'click');assert.equal(ui.nodes.get('continue-button').textContent,'查看通關結局');
@@ -573,8 +580,7 @@ console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'
   // Unlock survives a new game, reload, and an incomplete route replacing the autosave.
   ui.read('home()');emit(ui.nodes.get('start-button'),'click');ui.read('home()');
   assert.equal(ui.nodes.get('replay-menu').hidden,false);
-  ui.context.reloadSaved=ui.read("JSON.parse(localStorage.getItem('lianpo-story-v1'))");
-  const reloaded=await application(false,true,ui.context.reloadSaved);
+  const reloaded=await application(false,true,null,ui.memory);
   assert.equal(reloaded.nodes.get('replay-menu').hidden,false);
   assert.equal(reloaded.read('replay.progress.endings.length'),1);
 
@@ -603,3 +609,136 @@ console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'
 console.log(JSON.stringify({twoOptionShortcut:'passed',completedAutosave:'passed',homeCompletedResume:'passed',
   failureResumeAtChoice:'passed',oldCompletedAutosaveUpgrade:'passed',chapterReplay:'passed',discoveredRouteReplay:'passed',
   unexploredSpoilers:'hidden',permanentUnlock:'passed',oldManualSaveUnlock:'passed'},null,2));
+
+// Keyboard holds consume repeat events and the release across a transition into a choice.
+{
+  const clock=new Clock(), {owner,element}=surfaces();
+  let allowed=true, clicks=0;
+  const hold=new DialogueHold(element,{canStart:()=>allowed,onChange(){},onClick:()=>clicks++,setTimer:clock.set,clearTimer:clock.clear});
+  const space={key:' ',code:'Space',repeat:false};
+  assert(emit(element,'keydown',space).defaultPrevented);clock.advance(299);
+  assert(emit(element,'keyup',space).defaultPrevented);assert.equal(clicks,1);assert.equal(hold.active,false);
+  emit(element,'keydown',space);clock.advance(200);
+  assert(emit(element,'keydown',{...space,repeat:true}).defaultPrevented);clock.advance(100);assert(hold.active);
+  const option=new NodeStub(owner,'button');allowed=false;hold.cancel();
+  assert(emit(option,'keydown',{...space,repeat:true}).defaultPrevented);
+  assert(emit(option,'keyup',space).defaultPrevented);assert.equal(clicks,1);
+  assert.equal(emit(option,'keydown',space).defaultPrevented,false,'A new press could not activate a choice normally');
+  allowed=true;
+  for(const modifier of ['altKey','ctrlKey','metaKey','shiftKey']) {
+    assert.equal(emit(element,'keydown',{...space,[modifier]:true}).defaultPrevented,false);
+    clock.advance(500);assert.equal(hold.active,false);
+  }
+  emit(element,'keydown',space);clock.advance(300);assert(hold.active);
+  emit(owner.defaultView,'blur');assert.equal(hold.active,false);
+  assert(emit(element,'keydown',{...space,repeat:true}).defaultPrevented);
+  emit(element,'keydown',space);emit(element,'keyup',space);assert.equal(clicks,2,'A lost keyup blocked a new physical press');
+}
+
+// App fast-read suppresses page announcements, then exposes the latest page or the reached question once.
+{
+  const ui=await application(), space={key:' ',code:'Space',repeat:false};
+  emit(ui.nodes.get('start-button'),'click');
+  const next=ui.nodes.get('next-button'), region=ui.nodes.get('announcement');
+  const initial=ui.read('engine.state.current.eventIndex');
+  emit(next,'keydown',space);emit(next,'keyup',space);
+  assert.equal(ui.read('engine.state.current.eventIndex'),initial,'A short Space skipped the unfinished page');
+  emit(next,'keydown',space);emit(next,'keyup',space);
+  assert.notEqual(ui.read('engine.state.current.eventIndex'),initial);
+  emit(next,'keydown',space);ui.clock.advance(300);
+  assert.equal(ui.read('playbackRate()'),5);assert.equal(region.getAttribute('aria-live'),'off');assert.equal(region.textContent,'');
+  ui.clock.advance(250);assert.equal(region.textContent,'');
+  emit(next,'keyup',space);
+  assert.equal(region.getAttribute('aria-live'),'polite');assert.equal(region.textContent,ui.read('pendingAnnouncement'));
+  assert(region.textContent.length>0);
+  const released=ui.read('engine.state.current.eventIndex');ui.clock.advance(10000);
+  assert.equal(ui.read('engine.state.current.eventIndex'),released);
+
+  emit(next,'keydown',space);ui.clock.advance(300);ui.clock.advance(30000);
+  assert.equal(ui.read('engine.state.current.kind'),'choice');assert.equal(ui.read('dialogueHold.active'),false);
+  assert.equal(region.getAttribute('aria-live'),'polite');assert(region.textContent.includes(ui.nodes.get('choice-heading').textContent));
+  assert(region.textContent.includes('1：'));assert(region.textContent.includes('2：'));
+  const choice=ui.nodes.get('choices').children[0];
+  assert(emit(choice,'keydown',{...space,repeat:true}).defaultPrevented);
+  assert(emit(choice,'keyup',space).defaultPrevented);assert.equal(ui.read('engine.state.current.kind'),'choice');
+  assert.equal(emit(choice,'keydown',space).defaultPrevented,false);
+  assert.equal(ui.nodes.get('scene-choices').getAttribute('aria-modal'),null);
+  assert.equal(ui.nodes.get('choices').parent.getAttribute('role'),null,'An untrapped choice area still claims to be a modal dialog');
+  assert.deepEqual(ui.logs,[]);
+}
+
+// Full engine snapshots happen at the throttle boundary and checkpoints, never at each ordinary render.
+{
+  const ui=await application();ui.read('start()');
+  ui.read('globalThis.snapshotCalls=0;const originalSnapshot=engine.snapshot.bind(engine);engine.snapshot=()=>{snapshotCalls++;return originalSnapshot();};');
+  const autoWrites=()=>ui.writes.filter(write=>write.key==='lianpo-story-v2:auto').length;
+  const baseline=autoWrites();
+  for(let index=0;index<8;index++)ui.read('render(engine.advance(),{animate:false})');
+  assert.equal(ui.read('snapshotCalls'),0);assert.equal(autoWrites(),baseline);
+  ui.clock.advance(1999);assert.equal(ui.read('snapshotCalls'),0);
+  ui.clock.advance(1);assert.equal(ui.read('snapshotCalls'),1);assert.equal(autoWrites(),baseline+1);
+  assert.equal(ui.read('saves.read().auto.snapshot.state.current.eventIndex'),ui.read('engine.state.current.eventIndex'));
+  ui.read('render(engine.advance(),{animate:false})');ui.document.hidden=true;emit(ui.document,'visibilitychange');
+  assert.equal(autoWrites(),baseline+2);assert.equal(ui.read('autosave.dirty'),false);
+  emit(ui.document.defaultView,'pagehide');assert.equal(autoWrites(),baseline+2,'An idle tab overwrote the shared autosave');
+  ui.document.hidden=false;emit(ui.document,'visibilitychange');
+  ui.read('render(engine.advance(),{animate:false})');emit(ui.document.defaultView,'pagehide');
+  assert.equal(autoWrites(),baseline+3);assert.equal(ui.read('autosave.dirty'),false);
+  ui.clock.advance(2000);assert.equal(autoWrites(),baseline+3,'A flushed timer wrote the page again');
+  const first=new GameEngine(story);first.start();while(first.state.current.kind==='text')first.advance();
+  ui.context.firstChoice=first.snapshot();ui.read('render(engine.restore(firstChoice),{animate:false})');
+  assert.equal(autoWrites(),baseline+4,'A question was not saved immediately');
+  ui.read('choose(0)');assert.equal(autoWrites(),baseline+5,'An answer was not saved immediately');
+  assert.deepEqual(ui.logs,[]);
+}
+
+// Two live apps see remote saves and settings without restoring another tab's running story.
+{
+  const memory=new Map(), a=await application(false,true,null,memory), b=await application(false,true,null,memory);
+  a.read('start();render(engine.advance(),{animate:false});saveSlot(0);closeDialog()');
+  const running=a.read('engine.state.current.eventIndex');
+  b.read('start()');emit(b.nodes.get('music-button'),'click');
+  emit(a.document.defaultView,'storage',{key:'lianpo-story-v2:muted'});
+  assert.equal(a.read('engine.state.current.eventIndex'),running);assert.equal(a.read('saved.settings.muted'),true);
+  assert.equal(a.nodes.get('music-button').textContent,'音樂：關');assert(a.read('saved.slots[0]')!==null);
+  a.read("showSlots('load')");
+  const oldLoadAction=a.nodes.get('dialog-body').children[2].querySelector('button');oldLoadAction.focus();
+  b.read('saveSlot(1)');emit(a.document.defaultView,'storage',{key:'lianpo-story-v2:slot:1'});
+  assert.equal(a.read('saved.slots.filter(Boolean).length'),2);
+  assert.equal(a.document.activeElement.dataset.slot,'0','Refreshing slots lost the active slot button');
+  const currentLoad=a.document.activeElement;
+  b.read('saveSlot(0)');emit(currentLoad,'click');
+  assert.equal(a.read('engine.state.current.eventIndex'),b.read('engine.state.current.eventIndex'),'The load button used a stale captured snapshot');
+  const beforeCompletion=a.read('engine.state.current.eventIndex');
+  b.context.complete=routeEndings.find(snapshot=>snapshot.state.current.completed);
+  b.read('closeDialog();render(engine.restore(complete),{animate:false})');
+  const completionKey=b.writes.find(write=>write.key.endsWith(':completed')).key;
+  emit(a.document.defaultView,'storage',{key:completionKey});
+  assert.equal(a.read('replay.unlocked'),true);assert.equal(a.nodes.get('replay-menu').hidden,false);
+  assert.equal(a.read('engine.state.current.eventIndex'),beforeCompletion,'A remote completion jumped the running scene');
+  a.read('render(engine.advance(),{animate:false});autosave.flush()');
+  assert.equal(b.read('saves.read().progress.completed'),true);
+  const lastAuto=memory.get('lianpo-story-v2:auto');
+  b.document.hidden=true;emit(b.document,'visibilitychange');assert.equal(memory.get('lianpo-story-v2:auto'),lastAuto);
+  assert.deepEqual(a.logs,[]);assert.deepEqual(b.logs,[]);
+}
+
+// Fourth and later choices use their real count; keyboard digits and the agent schema agree.
+{
+  const expanded=structuredClone(story), map=expanded.maps.find(map=>map.events.some(event=>event.choices?.length===3));
+  const eventIndex=map.events.findIndex(event=>event.choices?.length===3), event=map.events[eventIndex];
+  event.choices.push({...event.choices[0],text:'第四項測試選項'});
+  const ui=await application(false,true,null,new Map(),expanded);
+  const initial=new GameEngine(expanded);initial.start();
+  const checkpoint=initial.snapshot();checkpoint.state.mapId=map.id;checkpoint.state.pc=eventIndex+1;
+  checkpoint.state.current={kind:'choice',eventIndex,choices:event.choices,prompt:event.prompt};
+  checkpoint.state.ended=false;ui.context.fourOptions=checkpoint;
+  ui.read('render(engine.restore(fourOptions),{animate:false})');
+  assert.equal(ui.nodes.get('choices').children.length,4);assert(ui.nodes.get('instruction').textContent.includes('1、2、3、4'));
+  assert.equal(ui.registeredTools.get('choose_story_option').inputSchema.properties.option.maximum,4);
+  emit(ui.nodes.get('game-frame'),'keydown',{key:'4',code:'Digit4'});
+  assert.equal(ui.read('engine.state.decisions.at(-1).index'),3);assert.deepEqual(ui.logs,[]);
+}
+console.log(JSON.stringify({keyboardTapAndHold:'passed',repeatCannotAnswerChoice:'passed',lostKeyupRecovery:'passed',
+  fastReadAnnouncements:'suppressed until release or checkpoint',autosaveSnapshots:'throttled',
+  hideAndPagehideFlush:'passed',twoLiveApps:'passed',freshSlotLoad:'passed',fourthChoiceShortcutAndSchema:'passed'},null,2));

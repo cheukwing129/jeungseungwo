@@ -71,11 +71,11 @@ const memory=new Map();
 const storage={getItem:k=>memory.get(k) || null,setItem:(k,v)=>memory.set(k,v)};
 const saves=new LocalSaves(storage);
 const savedEntry={snapshot:game.snapshot(),time:new Date().toISOString(),chapter:'完璧歸趙',preview:'春秋戰國時期'};
-assert(saves.write({auto:savedEntry,slots:[savedEntry,null,null],settings:{muted:true}}));
+assert(saves.writeAuto(savedEntry));assert(saves.writeSlot(0,savedEntry));assert(saves.writeMuted(true));
 const readback=saves.read();assert.deepEqual(readback.auto,savedEntry);assert.equal(readback.settings.muted,true);
-memory.set(STORAGE_KEY,'{broken');assert.equal(saves.read().auto,null);
+memory.clear();memory.set(STORAGE_KEY,'{broken');assert.equal(saves.read().auto,null);
 memory.set(STORAGE_KEY,JSON.stringify({auto:{time:'bad'},slots:[42,savedEntry],settings:{muted:'false'}}));
 const partial=saves.read();assert.equal(partial.slots[0],null);assert.deepEqual(partial.slots[1],savedEntry);assert.equal(partial.settings.muted,false);
-assert.equal(new LocalSaves({getItem(){return null;},setItem(){throw new Error('quota');}}).write({}),false);
+assert.equal(new LocalSaves({getItem(){return null;},setItem(){throw new Error('quota');}}).writeAuto(savedEntry),false);
 
 console.log(JSON.stringify({dialogue:coveredTexts.size,choicePoints:coveredChoices.size,options:coveredOptions.size,terminalRoutes:leaves.length,assets:story.assets.length,saveRestore:'passed',corruptStorage:'passed'},null,2));

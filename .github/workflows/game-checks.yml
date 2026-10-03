@@ -1,0 +1,47 @@
+name: Game checks
+
+on:
+  push:
+    paths:
+      - 'dist/**'
+      - 'tools/**'
+      - '.github/workflows/game-checks.yml'
+  pull_request:
+    paths:
+      - 'dist/**'
+      - 'tools/**'
+      - '.github/workflows/game-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: game-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Check JavaScript syntax
+        run: |
+          for file in dist/*.mjs tools/test_*.mjs; do
+            node --check "$file"
+          done
+      - name: Run all game tests
+        run: |
+          for test in tools/test_*.mjs; do
+            node "$test"
+          done
