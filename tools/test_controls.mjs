@@ -49,38 +49,78 @@ class NodeStub extends EventTarget {
     this.classList = {toggle(){}};
     this.open = false;
     this.captured = new Set();
+    this.captureListeners = new Map();
   }
   get textContent() { return this.children.length ? this.children.map(child => child.textContent).join('') : this.text || ''; }
   set textContent(text) { this.text = String(text); this.children = []; }
   append(...children) { for (const child of children) { child.parent = this; this.children.push(child); } }
   replaceChildren(...children) { this.children = []; this.text = ''; this.append(...children); }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this); }
-  closest(selector) { return selector.split(',').includes(this.tag) ? this : this.parent?.closest(selector) || null; }
+  matches(selector) {
+    return selector.split(',').some(part => {
+      part = part.trim();
+      if (part.startsWith('[')) return Object.hasOwn(this.attributes, part.slice(1, -1));
+      if (part.startsWith('#')) return this.attributes.id === part.slice(1);
+      return part === this.tag;
+    });
+  }
+  closest(selector) { return this.matches(selector) ? this : this.parent?.closest(selector) || null; }
   setAttribute(name, value) { this.attributes[name] = String(value); }
   removeAttribute(name) { delete this.attributes[name]; }
-  querySelector(selector) { return this.children.find(child => child.closest(selector)) || null; }
-  focus() {}
+  querySelector(selector) {
+    for (const child of this.children) {
+      if (child.matches(selector)) return child;
+      const descendant = child.querySelector(selector);
+      if (descendant) return descendant;
+    }
+    return null;
+  }
+  focus(options) { this.ownerDocument.activeElement = this; this.focusOptions = options; }
+  addEventListener(type, callback, options) {
+    if (options === true || options?.capture) {
+      const listeners = this.captureListeners.get(type) || [];
+      listeners.push(callback); this.captureListeners.set(type, listeners);
+    } else super.addEventListener(type, callback, options);
+  }
   setPointerCapture(id) { this.captured.add(id); }
   releasePointerCapture(id) { this.captured.delete(id); }
   showModal() { this.open = true; }
   close() { this.open = false; this.dispatchEvent(new Event('close')); }
 }
 
-function surfaces() {
+function surfaces(pointerEvents = true) {
   const owner = new EventTarget();
   owner.hidden = false;
   owner.defaultView = new EventTarget();
+  if (pointerEvents) owner.defaultView.PointerEvent = class {};
   const element = new NodeStub(owner);
   return {owner, element};
 }
 
 function emit(target, type, properties = {}) {
-  const event = new Event(type, {cancelable:true});
+  const event = new Event(type, {cancelable:true, bubbles:true});
+  Object.defineProperty(event, 'target', {value:target});
+  if (type === 'click') Object.defineProperty(event, 'detail', {value:1, configurable:true});
   for (const [name, value] of Object.entries(properties)) Object.defineProperty(event, name, {value});
-  target.dispatchEvent(event);
+  let stopped = false;
+  const stop = event.stopImmediatePropagation.bind(event);
+  event.stopImmediatePropagation = () => { stopped = true; stop(); };
+  const path = [];
+  for (let node = target; node; node = node.parent) path.push(node);
+  if (target.ownerDocument && !path.includes(target.ownerDocument)) path.push(target.ownerDocument);
+  for (const node of [...path].reverse()) {
+    for (const callback of node.captureListeners?.get(type) || []) {
+      callback(event);
+      if (stopped) return event;
+    }
+  }
+  for (const node of path) {
+    node.dispatchEvent(event);
+    if (stopped) break;
+  }
   return event;
 }
-const pointer = (id = 1, extra = {}) => ({pointerId:id, button:0, isPrimary:true, clientX:100, clientY:100, ...extra});
+const pointer = (id = 1, extra = {}) => ({pointerId:id, pointerType:'mouse', button:0, buttons:1, isPrimary:true, clientX:100, clientY:100, ...extra});
 
 // Distinguish a single tap, a hold, scrolling, multi-touch and lifecycle cancellation.
 {
@@ -106,7 +146,7 @@ const pointer = (id = 1, extra = {}) => ({pointerId:id, button:0, isPrimary:true
 
   for (const signal of ['pointercancel', 'lostpointercapture', 'scroll', 'blur', 'pagehide', 'hidden', 'choice']) {
     allowed = true; owner.hidden = false;
-    emit(element, 'pointerdown', pointer()); clock.advance(300);
+    emit(element, 'pointerdown', pointer(1, {pointerType:signal === 'scroll' ? 'touch' : 'mouse'})); clock.advance(300);
     assert(hold.active);
     if (signal === 'scroll') emit(element, 'pointermove', pointer(1, {clientY:120}));
     else if (signal === 'blur' || signal === 'pagehide') emit(owner.defaultView, signal);
@@ -122,15 +162,57 @@ const pointer = (id = 1, extra = {}) => ({pointerId:id, button:0, isPrimary:true
   assert.equal(hold.active, false);
 }
 
+// Mouse movement remains a hold, while a lost release and mouse-only browsers still stop safely.
+{
+  const clock = new Clock(), {owner, element} = surfaces();
+  let clicks = 0;
+  const hold = new DialogueHold(element, {canStart:() => true, onChange(){}, onClick:() => clicks++,
+    setTimer:clock.set, clearTimer:clock.clear});
+  emit(element, 'pointerdown', pointer());
+  emit(element, 'mousedown', {button:0, buttons:1, clientX:100, clientY:100});
+  assert.equal(clock.tasks.size, 1, 'Mouse compatibility events started a second hold');
+  emit(element, 'pointermove', pointer(1, {clientX:250, clientY:230})); clock.advance(300);
+  assert(hold.active, 'Moving the mouse interrupted a hold');
+  emit(owner, 'mousemove', {buttons:0}); assert.equal(hold.active, false);
+  assert(emit(element, 'click').defaultPrevented);
+
+  emit(element, 'pointerdown', pointer(1, {pointerType:'touch'})); clock.advance(300);
+  emit(element, 'pointerup', pointer(1, {pointerType:'touch', buttons:0}));
+  emit(element, 'mousedown', {button:0, clientX:100, clientY:100}); emit(owner, 'mouseup', {button:0});
+  assert(emit(element, 'click').defaultPrevented, 'A touch compatibility click advanced an extra page');
+  assert.equal(clicks, 0);
+
+  delete owner.defaultView.PointerEvent;
+  emit(element, 'mousedown', {button:0, clientX:100, clientY:100}); clock.advance(300);
+  assert(hold.active, 'A mouse-only browser cannot hold');
+  emit(owner, 'mouseup', {button:0}); assert.equal(hold.active, false);
+  assert(emit(element, 'click').defaultPrevented);
+  emit(element, 'mousedown', {button:0}); emit(owner, 'mouseup', {button:0}); emit(element, 'click');
+  assert.equal(clicks, 1, 'A short mouse-only click was lost');
+  emit(element, 'mousedown', {button:0}); clock.advance(300); emit(owner, 'mouseup', {button:0});
+  emit(element, 'click', {detail:0}); assert.equal(clicks, 2, 'A pending release blocked a keyboard click');
+  assert(emit(element, 'click').defaultPrevented, 'A keyboard click cleared the mouse release guard');
+}
+
 const story = JSON.parse(await readFile(new URL('../dist/story.json', import.meta.url), 'utf8'));
 const assets = JSON.parse(await readFile(new URL('../dist/assets.json', import.meta.url), 'utf8'));
 const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
 const app = await readFile(new URL('../dist/app.mjs', import.meta.url), 'utf8');
 
 // Execute the actual application handlers against deterministic input and timers.
-async function application(reducedMotion = false) {
-  const clock = new Clock(), {owner:document} = surfaces(), nodes = new Map();
-  for (const match of html.matchAll(/<([a-z]+)[^>]*\bid="([^"]+)"/g)) nodes.set(match[2], new NodeStub(document, match[1]));
+async function application(reducedMotion = false, pointerEvents = true) {
+  const clock = new Clock(), {owner:document} = surfaces(pointerEvents), nodes = new Map(), stack = [];
+  const voidTags = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+  for (const match of html.matchAll(/<(\/?)([a-z][a-z0-9-]*)(\s[^<>]*?)?>/gi)) {
+    const [, closing, tag, attributes = ''] = match;
+    if (closing) { assert.equal(stack.pop()?.tag, tag, 'HTML elements are not balanced'); continue; }
+    const node = new NodeStub(document, tag);
+    for (const attr of attributes.matchAll(/([\w-]+)(?:="([^"]*)")?/g)) node.setAttribute(attr[1], attr[2] || '');
+    if (node.attributes.id) nodes.set(node.attributes.id, node);
+    stack.at(-1)?.append(node);
+    if (!voidTags.has(tag)) stack.push(node);
+  }
+  assert.equal(stack.length, 0);
   document.getElementById = id => nodes.get(id);
   document.createElement = tag => new NodeStub(document, tag);
   const chapters = story.maps.map(map => { const node = new NodeStub(document); node.dataset.map = String(map.id); return node; });
@@ -216,6 +298,24 @@ if (read('typing')) tap();
 assert.equal(clock.remaining(read('autoTimer')), pause());
 emit(nodes.get('auto-button'), 'click');
 
+// Both the scene and the Continue button use the same single-click and mouse-hold controls.
+for (const target of [nodes.get('stage'), nodes.get('next-button').querySelector('span')]) {
+  read('render(engine.restore(stableSnapshot),{animate:false})');
+  const expected = new GameEngine(story); expected.restore(read('engine.snapshot()')); expected.advance();
+  emit(target, 'pointerdown', pointer()); emit(target, 'pointerup', pointer()); emit(target, 'click');
+  assert.equal(position(), `${expected.state.mapId}:${expected.state.current.eventIndex}`, 'A click advanced twice');
+  emit(target, 'pointerdown', pointer()); emit(target, 'mousedown', {button:0}); clock.advance(300);
+  assert.equal(read('playbackRate()'), 5);
+  emit(target, 'pointermove', pointer(1, {clientX:300, clientY:250}));
+  assert.equal(read('dialogueHold.active'), true, 'Mouse movement stopped scene/button fast reading');
+  emit(document, 'mouseup', {button:0}); emit(target, 'click');
+  assert.equal(read('dialogueHold.active'), false);
+}
+read('render(engine.restore(stableSnapshot),{animate:false})');
+emit(nodes.get('auto-button'), 'pointerdown', pointer()); clock.advance(300);
+assert.equal(read('dialogueHold.active'), false, 'The Auto button started a hold');
+emit(document, 'pointerup', pointer());
+
 // A real story choice interrupts the hold and requires an explicit choice.
 const sourceGame = new GameEngine(story); sourceGame.start();
 let precedingChoice;
@@ -228,11 +328,48 @@ context.testSnapshot = precedingChoice;
 read('render(engine.restore(testSnapshot),{animate:false})');
 emit(box, 'pointerdown', pointer()); clock.advance(300);
 assert.equal(read('engine.state.current.kind'), 'choice');
-assert.equal(read('dialogueHold.active'), false); release(); clock.advance(10000);
+assert.equal(read('dialogueHold.active'), false);
+assert.equal(nodes.get('scene-choices').hidden, false);
+assert.equal(nodes.get('scene-choices').parent, nodes.get('stage'), 'Choices are outside the scene');
+assert.equal(nodes.get('dialogue-actions').hidden, false, 'Opening choices changed the frame height');
+assert.equal(nodes.get('choices').children.length, read('engine.state.current.choices.length'));
+assert.equal(document.activeElement, nodes.get('choices').children[0]);
+assert.equal(document.activeElement.focusOptions.preventScroll, true);
+// Capture blocks the release click before it reaches a newly appeared choice button.
+const firstChoice = nodes.get('choices').children[0];
+emit(firstChoice, 'pointerup', pointer());
+assert(emit(firstChoice.querySelector('span'), 'click').defaultPrevented);
+clock.advance(10000);
 assert.equal(read('engine.state.current.kind'), 'choice');
 assert.equal(read('engine.state.decisions.length'), 0, 'Fast playback selected a branch');
 emit(box, 'pointerdown', pointer()); clock.advance(1000);
 assert.equal(read('dialogueHold.active'), false); emit(box, 'pointerup', pointer());
+emit(firstChoice, 'pointerdown', pointer()); emit(firstChoice, 'pointerup', pointer()); emit(firstChoice, 'click');
+assert.equal(read('engine.state.decisions.length'), 1, 'An explicit popup choice was ignored');
+assert.equal(nodes.get('scene-choices').hidden, true);
+assert.equal(document.activeElement, nodes.get('next-button'));
+assert.equal(document.activeElement.focusOptions.preventScroll, true);
+
+// Every reachable choice renders its original buttons inside the scene popup.
+const choicePoints = new Set(), choiceOptions = new Set(), routeQueue = [], routeStart = new GameEngine(story);
+routeStart.start(); routeQueue.push(routeStart.snapshot());
+while (routeQueue.length) {
+  const game = new GameEngine(story); game.restore(routeQueue.shift());
+  while (game.state.current.kind === 'text') game.advance();
+  if (game.state.current.kind !== 'choice') continue;
+  const key = `${game.state.mapId}:${game.state.current.eventIndex}`;
+  if (!choicePoints.has(key)) {
+    context.popupSnapshot = game.snapshot(); read('render(engine.restore(popupSnapshot),{animate:false})');
+    assert.equal(nodes.get('scene-choices').hidden, false);
+    assert.deepEqual(nodes.get('choices').children.map(button => button.children[1].textContent), game.state.current.choices.map(choice => choice.text));
+    choicePoints.add(key);
+  }
+  game.state.current.choices.forEach((_, index) => {
+    choiceOptions.add(`${key}:${index}`);
+    const branch = new GameEngine(story); branch.restore(game.snapshot()); branch.choose(index); routeQueue.push(branch.snapshot());
+  });
+}
+assert.equal(choicePoints.size, 14); assert.equal(choiceOptions.size, 32);
 
 read('render(engine.restore(stableSnapshot),{animate:false})'); hold();
 emit(nodes.get('history-button'), 'click');
@@ -274,6 +411,19 @@ emit(reducedBox, 'pointerup', pointer()); emit(reducedBox, 'click');
 const staticRelease = reduced.read('engine.state.current.eventIndex');
 reduced.clock.advance(10000); assert.equal(reduced.read('engine.state.current.eventIndex'), staticRelease);
 
+// The actual app also works when only native mouse events are available.
+const mouseOnly = await application(false, false), mouseScene = mouseOnly.nodes.get('stage');
+emit(mouseOnly.nodes.get('start-button'), 'click');
+emit(mouseScene, 'mousedown', {button:0, clientX:100, clientY:100}); mouseOnly.clock.advance(300);
+assert.equal(mouseOnly.read('playbackRate()'), 5);
+emit(mouseOnly.document, 'mousemove', {buttons:1, clientX:250});
+assert.equal(mouseOnly.read('dialogueHold.active'), true);
+emit(mouseOnly.document, 'mouseup', {button:0}); emit(mouseScene, 'click');
+assert.equal(mouseOnly.read('playbackRate()'), 1);
+const mouseRelease = mouseOnly.read('engine.state.current.eventIndex');
+mouseOnly.clock.advance(10000); assert.equal(mouseOnly.read('engine.state.current.eventIndex'), mouseRelease);
+
 console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'26 ms → 5.2 ms',
   pageWait:'none',immediateFirstGlyph:'passed',releaseWithoutExtraPage:'passed',normalAutoResume:'passed',choiceStop:'passed',
-  scrollAndLifecycleCancellation:'passed',menuAndVisibilityStop:'passed',endingStop:'passed',reducedMotion:'passed'}, null, 2));
+  popupChoicePoints:choicePoints.size,popupOptions:choiceOptions.size,mouseSceneAndContinue:'passed',mouseFallback:'passed',
+  mouseMovement:'passed',touchCompatibility:'passed',scrollAndLifecycleCancellation:'passed',menuAndVisibilityStop:'passed',endingStop:'passed',reducedMotion:'passed'}, null, 2));

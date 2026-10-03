@@ -1,7 +1,7 @@
 import {GameEngine,plainText,textRuns} from './engine.mjs';
 import {LocalSaves} from './storage.mjs';
 import {PictureRenderer} from './pictures.mjs';
-import {DialogueHold} from './dialogue-hold.mjs';
+import {DialogueHold} from './dialogue-hold.mjs?v=20261003-desktop';
 
 const $ = id => document.getElementById(id);
 let story, assets, engine, saved, saves, dialogueHold;
@@ -131,8 +131,8 @@ function render(result,{animate=true}={}) {
   $('dialogue-panel').hidden=current.kind==='ending';
   $('ending').hidden=current.kind!=='ending';
   $('choices').hidden=current.kind!=='choice';
-  $('dialogue-actions').hidden=current.kind!=='text';
-  $('scene-prompt').hidden=current.kind!=='choice';
+  $('dialogue-actions').hidden=current.kind==='ending';
+  $('scene-choices').hidden=current.kind!=='choice';
   $('next-button').hidden=current.kind!=='text';
   $('auto-button').hidden=current.kind!=='text';
   $('save-button').disabled=current.kind==='ending';
@@ -144,7 +144,7 @@ function render(result,{animate=true}={}) {
   pictureRenderer.render(state.pictures, assets, {width:story.width, height:story.height});
   if(current.kind==='text') {
     renderText(current.speaker,current.text,animate);
-    $('instruction').textContent='點擊畫面或按空白鍵繼續；點一下可顯示完整文字。按住對話框可五倍速連續播放，放開即停止快讀。';
+    $('instruction').textContent='點擊或按空白鍵繼續；按住場景、對話框或「繼續」可五倍速快讀，放開停止。';
   } else if(current.kind==='choice') {
     const last=[...state.history].reverse().find(item=>!item.choice);
     renderText(last?.speaker || '',last?.text || '',false);
@@ -156,7 +156,7 @@ function render(result,{animate=true}={}) {
       button.append(badge,label);button.addEventListener('click',()=>choose(index));choices.append(button);
     });
     $('instruction').textContent='選擇你的下一步。亦可按數字鍵 1、2、3 選擇。';
-    requestAnimationFrame(()=>choices.querySelector('button')?.focus({preventScroll:true}));
+    requestAnimationFrame(()=>{if(!$('scene-choices').hidden)choices.querySelector('button')?.focus({preventScroll:true});});
   } else {
     stopTyping();
     $('ending-text').textContent=plainText(current.conclusion).trim();
@@ -180,7 +180,11 @@ function next() {
 function choose(index) {
   if(busy || $('menu-dialog').open) return;
   busy=true;
-  try{render(engine.choose(index));}catch(error){handleError(error);}finally{busy=false;}
+  try{
+    render(engine.choose(index));
+    if(engine.state.current.kind==='text')$('next-button').focus({preventScroll:true});
+    else if(engine.state.current.kind==='ending')$('retry-button').focus({preventScroll:true});
+  }catch(error){handleError(error);}finally{busy=false;}
 }
 function start() {auto=false;dialogueHold?.cancel();updateAuto();render(engine.start());}
 function resume(item) {
@@ -245,7 +249,7 @@ function showHistory() {
 function home() {
   dialogueHold?.cancel();
   stopTyping();clearTimeout(autoTimer);auto=false;updateAuto();started=false;
-  $('title-screen').hidden=false;$('dialogue-panel').hidden=true;$('ending').hidden=true;$('scene-prompt').hidden=true;
+  $('title-screen').hidden=false;$('dialogue-panel').hidden=true;$('ending').hidden=true;$('scene-choices').hidden=true;
   $('return-button').hidden=true;$('save-button').disabled=true;$('history-button').disabled=true;
   $('continue-button').disabled=!saved.auto;
   $('continue-button').hidden=!saved.auto;
@@ -294,9 +298,7 @@ async function init() {
     $('continue-button').hidden=!saved.auto;
     $('start-button').addEventListener('click',start);
     $('continue-button').addEventListener('click',()=>saved.auto && resume(saved.auto));
-    $('next-button').addEventListener('click',next);
-    $('stage').addEventListener('click',event=>{if(!event.target.closest('button') && started)next();});
-    dialogueHold=new DialogueHold($('dialogue'), {
+    dialogueHold=new DialogueHold($('game-frame'), {
       canStart:()=>started && !busy && !document.hidden && !$('menu-dialog').open && engine.state?.current.kind==='text',
       onChange:updatePlayback,
       onClick:next,
