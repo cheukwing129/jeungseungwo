@@ -22,6 +22,7 @@ button{-webkit-tap-highlight-color:transparent}
 .dialogue.interlude .dialogue-inner{display:flex;flex-direction:column;justify-content:center}
 .dialogue.interlude .story-text{flex-shrink:0;text-align:center}
 .history-item.interlude p{text-align:center}
+.ending-feedback{max-width:38rem;margin:0 auto 25px;padding:14px 18px;border:1px solid var(--line);border-radius:4px;background:#101a1940;text-align:left;font-size:1rem;line-height:1.8;color:#dce4d5;white-space:pre-wrap}
 
 /* Choices stay inside the scene and do not push the dialogue or page down. */
 .scene-choices{position:absolute;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:#07110bb8;backdrop-filter:blur(3px);cursor:default}

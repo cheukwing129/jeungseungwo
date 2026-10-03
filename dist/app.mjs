@@ -1,4 +1,4 @@
-import {GameEngine,plainText,textRuns} from './engine.mjs';
+import {GameEngine,plainText,textRuns} from './engine.mjs?v=20261003-text-flow';
 import {LocalSaves} from './storage.mjs';
 import {PictureRenderer} from './pictures.mjs';
 import {DialogueHold} from './dialogue-hold.mjs?v=20261003-desktop';
@@ -28,11 +28,12 @@ function entry(snapshot) {
   const state = snapshot.state;
   const recent = [...state.history].reverse().find(item=>!item.choice);
   return {snapshot,time:new Date().toISOString(),chapter:engine.maps.get(state.mapId).title,
-    preview:plainText(formatDialogue(recent?.speaker || '',recent?.text || '等待你的抉擇').text).trim().slice(0,48)};
+    preview:state.current?.kind==='ending' ? (state.current.completed?'已通關：刎頸之交':'可返回上次抉擇') :
+      plainText(formatDialogue(recent?.speaker || '',recent?.text || '等待你的抉擇',recent?.interlude).text).trim().slice(0,48)};
 }
 
 function autosave() {
-  if (!engine.state || engine.state.ended) return;
+  if (!engine.state) return;
   saved.auto = entry(engine.snapshot()); persist();
 }
 
@@ -76,21 +77,22 @@ function completeText() {
   stopTyping(); scheduleAuto();
 }
 
-function formatDialogue(speaker,text) {
+function formatDialogue(speaker,text,interlude=false) {
   const visible=plainText(text),compact=visible.replace(/[ \t\u3000]+/g,'').trim();
-  const centered=!speaker && (/^[ \t\u3000]{2,}/.test(visible) ||
-    /^(?:序章(?:完)?|第[一二三]章(?:完|完璧歸趙|澠池之會|負荊請罪)|秦國‧章台|全劇終|完)$/.test(compact));
+  const centered=!speaker && (interlude || /^[ \t\u3000]{2,}/.test(visible) ||
+    /^(?:序章(?:完)?|第[一二三]章(?:完|完璧歸趙|澠池之會|負荊請罪)|秦國‧章台|澠池會宴|全劇終|完)[。.!！]?$/.test(compact));
   // Normalize at presentation time so older saves receive the same layout.
   return {text:centered ? String(text).replaceAll('\\n','\n').replace(/[ \t\u3000]+/g,'').trim() : text,centered};
 }
 
-function renderText(speaker,text,animate) {
+function renderText(speaker,text,animate,interlude=false) {
   stopTyping();
-  const presentation=formatDialogue(speaker,text);text=presentation.text;
+  const presentation=formatDialogue(speaker,text,interlude);text=presentation.text;
   $('dialogue').classList.toggle('interlude',presentation.centered);
   $('speaker').hidden=presentation.centered;
-  $('speaker').textContent = speaker || '旁白';
-  $('announcement').textContent = presentation.centered ? plainText(text) : `${speaker || '旁白'}：${plainText(text)}`;
+  $('speaker').textContent = `${speaker || '旁白'}${engine.state?.hypothetical?' · 假設情節':''}`;
+  $('announcement').textContent = (engine.state?.hypothetical?'假設情節。':'')+
+    (presentation.centered ? plainText(text) : `${speaker || '旁白'}：${plainText(text)}`);
   const target = $('story-text'); target.replaceChildren();
   const runs=textRuns(text),spans=[];
   for (const run of runs) {
@@ -155,11 +157,12 @@ function render(result,{animate=true}={}) {
   }
   pictureRenderer.render(state.pictures, assets, {width:story.width, height:story.height});
   if(current.kind==='text') {
-    renderText(current.speaker,current.text,animate);
-    $('instruction').textContent='點擊或按空白鍵繼續；按住場景、對話框或「繼續」可五倍速快讀，放開停止。';
+    renderText(current.speaker,current.text,animate,current.interlude);
+    $('instruction').textContent=(state.hypothetical?'假設情節，並非史實。':'')+'點擊或按空白鍵繼續；按住場景、對話框或「繼續」可五倍速快讀，放開停止。';
   } else if(current.kind==='choice') {
     const last=[...state.history].reverse().find(item=>!item.choice);
-    renderText(last?.speaker || '',last?.text || '',false);
+    renderText(last?.speaker || '',last?.text || '',false,last?.interlude);
+    $('choice-heading').textContent=current.prompt || '按原文，請作出你的抉擇';
     const choices=$('choices');choices.replaceChildren();
     current.choices.forEach((choice,index)=>{
       const button=document.createElement('button');button.className='choice-button';
@@ -167,22 +170,24 @@ function render(result,{animate=true}={}) {
       const label=document.createElement('span');label.textContent=choice.text;
       button.append(badge,label);button.addEventListener('click',()=>choose(index));choices.append(button);
     });
-    $('instruction').textContent='選擇你的下一步。亦可按數字鍵 1、2、3 選擇。';
+    $('instruction').textContent=`按原文作選擇。亦可按數字鍵 ${current.choices.map((_,index)=>index+1).join('、')} 選擇。`;
     requestAnimationFrame(()=>{if(!$('scene-choices').hidden)choices.querySelector('button')?.focus({preventScroll:true});});
   } else {
     stopTyping();
     $('ending-text').textContent=plainText(current.conclusion).trim();
-    $('ending-title').textContent=current.completed?'全劇終':'本段劇情結束';
-    $('ending-eyebrow').textContent=current.completed?'故事落幕':'本段故事結束';
+    $('ending-feedback').textContent=current.feedback || '';
+    $('ending-feedback').hidden=!current.feedback;
+    $('ending-title').textContent=current.completed?'全劇終':current.category==='理解回饋'?'再想一想':'偏離原文走向';
+    $('ending-eyebrow').textContent=current.category || (current.completed?'故事落幕':'假設情節');
     $('retry-button').hidden=current.completed || !engine.lastChoice;
     $('instruction').textContent=current.completed?'故事已結束，感謝遊玩。':'可以回到上一個選擇，重新作出抉擇。';
-    $('announcement').textContent=`${$('ending-title').textContent}。${plainText(current.conclusion)}`;
+    $('announcement').textContent=`${$('ending-title').textContent}。${plainText(current.conclusion)} ${current.feedback || ''}`;
     requestAnimationFrame(()=>{
       if(engine.state.current.kind==='ending')($('retry-button').hidden?$('home-button'):$('retry-button')).focus({preventScroll:true});
     });
   }
   syncMusic();playEffects(result.effects || []);
-  if(!state.ended)autosave();
+  autosave();
 }
 
 function handleError(error) {console.error(error);toast(error.message || '暫時未能繼續，請讀取存檔或重新開始。');}
@@ -204,8 +209,8 @@ function choose(index) {
 }
 function start() {auto=false;dialogueHold?.cancel();updateAuto();render(engine.start());}
 function resume(item) {
-  try{auto=false;dialogueHold?.cancel();updateAuto();render(engine.restore(item.snapshot),{animate:false});closeDialog();}
-  catch(error){handleError(error);}
+  try{auto=false;dialogueHold?.cancel();updateAuto();render(engine.restore(item.snapshot),{animate:false});closeDialog();return true;}
+  catch(error){handleError(error);return false;}
 }
 
 function updateAuto() {$('auto-button').textContent=`自動：${auto?'開':'關'}`;$('auto-button').setAttribute('aria-pressed',String(auto));}
@@ -255,9 +260,9 @@ function showHistory() {
   if(!engine.state)return;
   openDialog('劇情紀錄');const body=$('dialog-body');
   for(const item of engine.state.history) {
-    const presentation=formatDialogue(item.speaker,item.text);
+    const presentation=formatDialogue(item.speaker,item.text,item.interlude);
     const node=document.createElement('div');node.className=`history-item${item.choice?' choice':''}${presentation.centered?' interlude':''}`;
-    const speaker=document.createElement('strong');speaker.textContent=item.speaker || '旁白';
+    const speaker=document.createElement('strong');speaker.textContent=`${item.speaker || '旁白'}${item.hypothetical?' · 假設情節':''}`;
     speaker.hidden=presentation.centered;
     node.append(speaker,paragraph('',plainText(presentation.text)));body.append(node);
   }
@@ -269,10 +274,25 @@ function home() {
   stopTyping();clearTimeout(autoTimer);auto=false;updateAuto();started=false;
   $('title-screen').hidden=false;$('dialogue-panel').hidden=true;$('ending').hidden=true;$('scene-choices').hidden=true;
   $('return-button').hidden=true;$('save-button').disabled=true;$('history-button').disabled=true;
-  $('continue-button').disabled=!saved.auto;
-  $('continue-button').hidden=!saved.auto;
+  updateContinue();
   $('instruction').textContent='點擊「開始遊戲」，走進藺相如的故事。';
   syncMusic();closeDialog();$('start-button').focus({preventScroll:true});
+}
+
+function updateContinue() {
+  const current=saved.auto?.snapshot?.state?.current;
+  $('continue-button').disabled=!saved.auto;
+  $('continue-button').hidden=!saved.auto;
+  $('continue-button').textContent=current?.kind==='ending' ?
+    (current.completed?'查看通關結局':'返回上次抉擇'):'接續上次進度';
+}
+
+function resumeAuto() {
+  if(!saved.auto)return;
+  if(!resume(saved.auto))return;
+  if(engine.state?.current.kind==='ending' && !engine.state.current.completed && engine.lastChoice) {
+    render(engine.retry(),{animate:false});
+  }
 }
 
 function confirmHome() {
@@ -302,7 +322,7 @@ function registerTools() {
 
 async function init() {
   try {
-    const responses=await Promise.all([fetch('./story.json'),fetch('./assets.json')]);
+    const responses=await Promise.all([fetch('./story.json?v=20261003-text-flow'),fetch('./assets.json')]);
     if(responses.some(response=>!response.ok))throw new Error('遊戲資料未能載入。');
     [story,assets]=await Promise.all(responses.map(response=>response.json()));
     engine=new GameEngine(story);
@@ -311,11 +331,19 @@ async function init() {
     if(saves.error)toast('之前的存檔未能讀取，你仍可以開始新遊戲。');
     if(saved.auto?.snapshot?.sourceHash!==story.sourceHash)saved.auto=null;
     saved.slots=Array.from({length:3},(_,i)=>saved.slots[i] || null);
+    // Refresh old text and choice labels, retaining unchanged original command positions.
+    for(const item of [saved.auto,...saved.slots].filter(Boolean)) {
+      try {
+        if(item.snapshot.sourceHash!==story.sourceHash)continue;
+        engine.restore(item.snapshot);item.snapshot=engine.snapshot();
+        item.preview=entry(item.snapshot).preview;
+      } catch { /* A damaged manual save is reported when the player selects it. */ }
+    }
+    persist();
     $('start-button').disabled=false;$('start-button').textContent='開始遊戲';
-    $('continue-button').disabled=!saved.auto;updateMusic();
-    $('continue-button').hidden=!saved.auto;
+    updateContinue();updateMusic();
     $('start-button').addEventListener('click',start);
-    $('continue-button').addEventListener('click',()=>saved.auto && resume(saved.auto));
+    $('continue-button').addEventListener('click',resumeAuto);
     dialogueHold=new DialogueHold($('game-frame'), {
       canStart:()=>started && !busy && !document.hidden && !$('menu-dialog').open && engine.state?.current.kind==='text',
       onChange:updatePlayback,
@@ -344,7 +372,10 @@ async function init() {
     document.addEventListener('keydown',event=>{
       if($('menu-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
       if(event.target.closest('input,select,textarea,a'))return;
-      if(started && engine.state.current.kind==='choice' && /^[1-3]$/.test(event.key)){event.preventDefault();choose(Number(event.key)-1);}
+      if(started && engine.state.current.kind==='choice' && /^[1-3]$/.test(event.key)){
+        event.preventDefault();
+        const index=Number(event.key)-1;if(engine.state.current.choices[index])choose(index);
+      }
       else if(!event.target.closest('button') && started && (event.code==='Space' || event.key==='Enter')){event.preventDefault();next();}
     });
     document.addEventListener('visibilitychange',()=>{if(document.hidden){music.pause();clearTimeout(autoTimer);for(const sound of sounds)sound.pause();}else{syncMusic();scheduleAuto();}});

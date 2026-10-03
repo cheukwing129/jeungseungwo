@@ -45,7 +45,7 @@ while(queue.length) {
   }
 }
 
-assert.equal(coveredTexts.size,530,'Some original dialogue is unreachable');
+assert.equal(coveredTexts.size,529,'Some reviewed dialogue is unreachable');
 assert.equal(coveredChoices.size,14,'Some original choice points are unreachable');
 assert.equal(coveredOptions.size,32,'Some original options were dropped');
 assert.equal(leaves.length,19,'Unexpected number of terminal routes');

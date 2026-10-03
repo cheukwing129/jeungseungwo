@@ -1,0 +1,1498 @@
+{
+  "thirdChapterChoice": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "state": {
+      "mapId": 3,
+      "pc": 294,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 299,
+          "y": -16,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/懸疑.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "趙國要留下頂樑之柱以應事變",
+            "target": 295,
+            "end": 303
+          },
+          {
+            "text": "以威攝秦軍",
+            "target": 304,
+            "end": 463
+          }
+        ],
+        "eventIndex": 293
+      },
+      "history": [
+        {
+          "speaker": "門客們",
+          "text": "但你現在就是一隻膽小鬼啊！"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我連秦王都不怕了，還會怕廉將軍嗎？"
+        },
+        {
+          "speaker": "門客們",
+          "text": "（你就是很怕啊！）"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "唉！（凡人的智商就是令人頭痛）"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我最後問你們一個問題，\\n你們還不能參透的話，就自行離去吧。"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "你們知道於澠池之會，\\n為何我不希望廉頗隨行赴會嗎？"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "先想辦法拿回玉璧"
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "威脅"
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "再拖一拖時間"
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "不相信"
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "議和"
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "讓自己隨行"
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "發怒"
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "避開廉頗"
+        }
+      ],
+      "ended": false
+    },
+    "lastChoice": {
+      "mapId": 3,
+      "pc": 294,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 299,
+          "y": -16,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/懸疑.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "趙國要留下頂樑之柱以應事變",
+            "target": 295,
+            "end": 303
+          },
+          {
+            "text": "以威攝秦軍",
+            "target": 304,
+            "end": 463
+          }
+        ],
+        "eventIndex": 293
+      },
+      "history": [
+        {
+          "speaker": "門客們",
+          "text": "但你現在就是一隻膽小鬼啊！"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我連秦王都不怕了，還會怕廉將軍嗎？"
+        },
+        {
+          "speaker": "門客們",
+          "text": "（你就是很怕啊！）"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "唉！（凡人的智商就是令人頭痛）"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我最後問你們一個問題，\\n你們還不能參透的話，就自行離去吧。"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "你們知道於澠池之會，\\n為何我不希望廉頗隨行赴會嗎？"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "先想辦法拿回玉璧"
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "威脅"
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "再拖一拖時間"
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "不相信"
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "議和"
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "讓自己隨行"
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "發怒"
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "避開廉頗"
+        }
+      ],
+      "ended": false
+    }
+  },
+  "mianchiHistory": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "state": {
+      "mapId": 3,
+      "pc": 95,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_茶室1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 43,
+          "y": 1,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/魂の剣は折れぬ.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "請示趙王",
+            "target": 96,
+            "end": 138
+          },
+          {
+            "text": "避開廉頗",
+            "target": 139,
+            "end": 464
+          },
+          {
+            "text": "討好廉頗",
+            "target": 465,
+            "end": 511
+          }
+        ],
+        "eventIndex": 94
+      },
+      "history": [
+        {
+          "speaker": "秦昭王",
+          "text": "（相如果真智勇雙全，孤王定必要好好賞賜他！）\\n\\c[104,104,255]功績+500"
+        },
+        {
+          "speaker": "廉頗",
+          "text": "我！一！定！會！將！他！羞！辱！至！死！"
+        },
+        {
+          "speaker": "",
+          "text": "當日，在藺相如府中。"
+        },
+        {
+          "speaker": "小官",
+          "text": "今日發生了這樣這樣一件事......"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我本一介草民，忽然得拜上卿，\\n廉將軍對我恨意極深，亦是情有可原。"
+        },
+        {
+          "speaker": "小官",
+          "text": "藺大人打算如何應對？"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "如今之計......"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "先想辦法拿回玉璧"
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "威脅"
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "再拖一拖時間"
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "不相信"
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "議和"
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "讓自己隨行"
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "發怒"
+        }
+      ],
+      "ended": false
+    },
+    "lastChoice": {
+      "mapId": 3,
+      "pc": 95,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_茶室1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 43,
+          "y": 1,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/魂の剣は折れぬ.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "請示趙王",
+            "target": 96,
+            "end": 138
+          },
+          {
+            "text": "避開廉頗",
+            "target": 139,
+            "end": 464
+          },
+          {
+            "text": "討好廉頗",
+            "target": 465,
+            "end": 511
+          }
+        ],
+        "eventIndex": 94
+      },
+      "history": [
+        {
+          "speaker": "廉頗",
+          "text": "我！一！定！會！將！他！羞！辱！至！死！"
+        },
+        {
+          "speaker": "",
+          "text": "當日，在藺相如府中。"
+        },
+        {
+          "speaker": "小官",
+          "text": "今日發生了這樣這樣一件事......"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我本一介草民，忽然得拜上卿，\\n廉將軍對我恨意極深，亦是情有可原。"
+        },
+        {
+          "speaker": "小官",
+          "text": "藺大人打算如何應對？"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "如今之計......"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "先想辦法拿回玉璧"
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "威脅"
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "再拖一拖時間"
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "不相信"
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "議和"
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "讓自己隨行"
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "發怒"
+        }
+      ],
+      "ended": false
+    }
+  },
+  "punctuatedFailure": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "state": {
+      "mapId": 1,
+      "pc": 712,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "3": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 116,
+          "y": 12,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/武将_顔_810_通常.png",
+          "x": 322,
+          "y": -4,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/悲伤往事.mp3",
+        "volume": 0.7,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "ending",
+        "completed": false,
+        "conclusion": "完。",
+        "eventIndex": 711
+      },
+      "history": [
+        {
+          "speaker": "藺相如",
+          "text": "你這種言而無信的人，還不如一條狗！"
+        },
+        {
+          "speaker": "秦昭王",
+          "text": "你！豈敢！？"
+        },
+        {
+          "speaker": "秦昭王",
+          "text": "來人！把這人拖出去斬！"
+        },
+        {
+          "speaker": "小官甲",
+          "text": "是！！"
+        },
+        {
+          "speaker": "",
+          "text": "藺相如命喪秦地。"
+        },
+        {
+          "speaker": "",
+          "text": "完。"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 0,
+          "text": "發怒斥責"
+        }
+      ],
+      "ended": true
+    },
+    "lastChoice": {
+      "mapId": 1,
+      "pc": 687,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "3": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 116,
+          "y": 12,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "4": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 506,
+          "y": 1,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": true
+        },
+        "5": {
+          "asset": "Half/武将_顔_810_通常.png",
+          "x": 322,
+          "y": -4,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/霸气男主出场.mp3",
+        "volume": 0.7,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "發怒斥責",
+            "target": 688,
+            "end": 712
+          },
+          {
+            "text": "強忍",
+            "target": 713,
+            "end": 732
+          },
+          {
+            "text": "先想辦法拿回玉璧",
+            "target": 733,
+            "end": 972
+          }
+        ],
+        "eventIndex": 686
+      },
+      "history": [
+        {
+          "speaker": "群臣",
+          "text": "陛下得此寶物，真是天降祥瑞啊！"
+        },
+        {
+          "speaker": "群臣",
+          "text": "萬歲！！"
+        },
+        {
+          "speaker": "群臣",
+          "text": "萬歲！！"
+        },
+        {
+          "speaker": "群臣",
+          "text": "萬歲！！萬歲！！"
+        },
+        {
+          "speaker": "秦昭王",
+          "text": "哈哈哈哈！"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "秦王……"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        }
+      ],
+      "ended": false
+    }
+  },
+  "oldCompleted": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "state": {
+      "mapId": 3,
+      "pc": 462,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_会客室1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "3": {
+          "asset": "Half/武将_顔_846_通常.png",
+          "x": 20,
+          "y": 30,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "4": {
+          "asset": "Half/0002.png",
+          "x": 599,
+          "y": 33,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 74,
+          "y": 3,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/暮砪腔枘雞ㄗ袚砪﹜朸贈ㄘ.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "ending",
+        "completed": true,
+        "conclusion": "惜趙孝成王終以趙括代廉頗，令趙國於長平之戰為秦國所敗，\\n四十萬名士兵慘遭坑殺，自始元氣大傷。",
+        "eventIndex": 461
+      },
+      "history": [
+        {
+          "speaker": "藺相如",
+          "text": "我……（目光微暖）"
+        },
+        {
+          "speaker": "門客們",
+          "text": "（這……怎麼怪怪的？）"
+        },
+        {
+          "speaker": "",
+          "text": "二人終一解恩怨，終成刎頸之交。"
+        },
+        {
+          "speaker": "",
+          "text": "廉頗以其勇武多次大破秦軍，\\n藺相如於廉頗陷入內鬥時亦為其保駕護航，"
+        },
+        {
+          "speaker": "",
+          "text": "惜趙孝成王終以趙括代廉頗，令趙國於長平之戰為秦國所敗，\\n四十萬名士兵慘遭坑殺，自始元氣大傷。"
+        },
+        {
+          "speaker": "",
+          "text": "　　　　　　　　　　　　全劇終"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "先想辦法拿回玉璧"
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "威脅"
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "再拖一拖時間"
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "不相信"
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "議和"
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "讓自己隨行"
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "發怒"
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "避開廉頗"
+        },
+        {
+          "mapId": 3,
+          "event": 293,
+          "index": 1,
+          "text": "以威攝秦軍"
+        },
+        {
+          "mapId": 3,
+          "event": 371,
+          "index": 1,
+          "text": "散播消息"
+        }
+      ],
+      "ended": true
+    },
+    "lastChoice": {
+      "mapId": 3,
+      "pc": 372,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "4": {
+          "asset": "Half/0002.png",
+          "x": 577,
+          "y": 21,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/懸疑.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "上門賠罪",
+            "target": 373,
+            "end": 381
+          },
+          {
+            "text": "散播消息",
+            "target": 382,
+            "end": 462
+          }
+        ],
+        "eventIndex": 371
+      },
+      "history": [
+        {
+          "speaker": "藺相如",
+          "text": "（倍感欣慰）"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "所以說，凡人不要動不動就質疑神的存在啊……"
+        },
+        {
+          "speaker": "門客一號",
+          "text": "可是，廉將軍乃一介武將，未必能跟上您的腦迴路啊。"
+        },
+        {
+          "speaker": "門客三號",
+          "text": "（我們也跟不上啊……）"
+        },
+        {
+          "speaker": "門客二號",
+          "text": "請君上門向廉將軍賠罪！"
+        },
+        {
+          "speaker": "門客三號",
+          "text": "或是請您批准我們將以上的消息散播出去！"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "先想辦法拿回玉璧"
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "威脅"
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "再拖一拖時間"
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "不相信"
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "議和"
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "讓自己隨行"
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "發怒"
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "避開廉頗"
+        },
+        {
+          "mapId": 3,
+          "event": 293,
+          "index": 1,
+          "text": "以威攝秦軍"
+        }
+      ],
+      "ended": false
+    }
+  },
+  "oldFinalCard": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "state": {
+      "mapId": 3,
+      "pc": 461,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_会客室1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "3": {
+          "asset": "Half/武将_顔_846_通常.png",
+          "x": 20,
+          "y": 30,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "4": {
+          "asset": "Half/0002.png",
+          "x": 599,
+          "y": 33,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 74,
+          "y": 3,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/暮砪腔枘雞ㄗ袚砪﹜朸贈ㄘ.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "text",
+        "speaker": "",
+        "text": "　　　　　　　　　　　　全劇終",
+        "eventIndex": 460
+      },
+      "history": [
+        {
+          "speaker": "藺相如",
+          "text": "我……（目光微暖）"
+        },
+        {
+          "speaker": "門客們",
+          "text": "（這……怎麼怪怪的？）"
+        },
+        {
+          "speaker": "",
+          "text": "二人終一解恩怨，終成刎頸之交。"
+        },
+        {
+          "speaker": "",
+          "text": "廉頗以其勇武多次大破秦軍，\\n藺相如於廉頗陷入內鬥時亦為其保駕護航，"
+        },
+        {
+          "speaker": "",
+          "text": "惜趙孝成王終以趙括代廉頗，令趙國於長平之戰為秦國所敗，\\n四十萬名士兵慘遭坑殺，自始元氣大傷。"
+        },
+        {
+          "speaker": "",
+          "text": "　　　　　　　　　　　　全劇終"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "先想辦法拿回玉璧"
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "威脅"
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "再拖一拖時間"
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "不相信"
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "議和"
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "讓自己隨行"
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "發怒"
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "避開廉頗"
+        },
+        {
+          "mapId": 3,
+          "event": 293,
+          "index": 1,
+          "text": "以威攝秦軍"
+        },
+        {
+          "mapId": 3,
+          "event": 371,
+          "index": 1,
+          "text": "散播消息"
+        }
+      ],
+      "ended": false
+    },
+    "lastChoice": {
+      "mapId": 3,
+      "pc": 372,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "4": {
+          "asset": "Half/0002.png",
+          "x": 577,
+          "y": 21,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/懸疑.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "上門賠罪",
+            "target": 373,
+            "end": 381
+          },
+          {
+            "text": "散播消息",
+            "target": 382,
+            "end": 462
+          }
+        ],
+        "eventIndex": 371
+      },
+      "history": [
+        {
+          "speaker": "藺相如",
+          "text": "（倍感欣慰）"
+        },
+        {
+          "speaker": "藺相如",
+          "text": "所以說，凡人不要動不動就質疑神的存在啊……"
+        },
+        {
+          "speaker": "門客一號",
+          "text": "可是，廉將軍乃一介武將，未必能跟上您的腦迴路啊。"
+        },
+        {
+          "speaker": "門客三號",
+          "text": "（我們也跟不上啊……）"
+        },
+        {
+          "speaker": "門客二號",
+          "text": "請君上門向廉將軍賠罪！"
+        },
+        {
+          "speaker": "門客三號",
+          "text": "或是請您批准我們將以上的消息散播出去！"
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "說之以形勢"
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請求治罪"
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "應該答應"
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "自薦"
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "先想辦法拿回玉璧"
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "威脅"
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "再拖一拖時間"
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "不相信"
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "議和"
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "讓自己隨行"
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "發怒"
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "避開廉頗"
+        },
+        {
+          "mapId": 3,
+          "event": 293,
+          "index": 1,
+          "text": "以威攝秦軍"
+        }
+      ],
+      "ended": false
+    }
+  }
+}

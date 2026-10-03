@@ -45,7 +45,7 @@ while (queue.length) {
     }
   }
 }
-assert.equal(scenes.size, 530);
+assert.equal(scenes.size, 529);
 
 // Reproduce the reported character with actual pages, including reading a saved hidden state.
 for (const reducedMotion of [false, true]) {
@@ -79,6 +79,9 @@ const portraits = new Set(), miaoPages = new Set();
 const frameWidths = [294, 722, 958, 1102]; // Game widths at 320, 768, 1024 and 1440 px viewports.
 for (const state of scenes.values()) {
   const before = JSON.stringify(state);
+  const kingPortrait={'趙惠文王':'Half/武将_顔_807_通常.png','秦昭王':'Half/武将_顔_810_通常.png'}[state.current.speaker];
+  if(kingPortrait)assert(Object.values(state.pictures).some(picture=>picture.asset===kingPortrait && picture.opacity>0),
+    `The king's name and visible portrait differ at ${state.mapId}:${state.current.eventIndex}`);
   for (const [id, picture] of Object.entries(state.pictures)) {
     const asset = assets[picture.asset];
     assert(asset, `Missing picture asset at ${state.mapId}:${state.current.eventIndex}`);

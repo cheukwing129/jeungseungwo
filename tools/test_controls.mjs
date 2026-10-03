@@ -208,7 +208,7 @@ const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf
 const app = await readFile(new URL('../dist/app.mjs', import.meta.url), 'utf8');
 
 // Execute the actual application handlers against deterministic input and timers.
-async function application(reducedMotion = false, pointerEvents = true) {
+async function application(reducedMotion = false, pointerEvents = true, savedValue = null) {
   const clock = new Clock(), {owner:document} = surfaces(pointerEvents), nodes = new Map(), stack = [];
   const voidTags = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
   for (const match of html.matchAll(/<(\/?)([a-z][a-z0-9-]*)(\s[^<>]*?)?>/gi)) {
@@ -235,6 +235,7 @@ async function application(reducedMotion = false, pointerEvents = true) {
       requestFrame:callback => clock.set(callback, 0), setTimer:clock.set}); }
   }
   const memory = new Map(), logs = [];
+  if(savedValue)memory.set('lianpo-story-v1',JSON.stringify(savedValue));
   const context = vm.createContext({
     document, GameEngine, plainText, textRuns, LocalSaves, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
     structuredClone, matchMedia:() => ({matches:reducedMotion}), Audio:AudioStub,
@@ -260,7 +261,7 @@ const position = () => read('`${engine.state.mapId}:${engine.state.current.event
 const pause = () => read('Math.max(1500,Math.min(6000,plainText(engine.state.current.text).length*40))');
 
 // Original interludes and chapter cards render without spacing used as layout padding.
-const interludePages = new Set(['1:30','1:226','1:229','1:446','1:512','1:597','1:605','1:728',
+const interludePages = new Set(['1:30','1:226','1:229','1:446','1:512','1:597','1:605','1:708','1:728',
   '1:882','1:969','1:1012','1:1177','2:1','2:252','2:316','2:343','2:375','2:479','2:554',
   '3:1','3:136','3:301','3:379','3:460','3:509']);
 let centeredPages = 0;
@@ -279,7 +280,7 @@ for (const map of story.maps) for (const [index, event] of map.events.entries())
     assert.equal(nodes.get('announcement').textContent, nodes.get('story-text').textContent);
   } else assert.equal(presentation.text, event.p[2], 'Ordinary dialogue text changed');
 }
-assert.equal(centeredPages, 25);
+assert.equal(centeredPages, 26);
 const intro = story.maps[0].events.find(event => event.code === 100);
 context.testSpeaker = intro.p[0]; context.testText = intro.p[2]; read('renderText(testSpeaker,testText,false)');
 assert.equal(nodes.get('dialogue').classList.contains('interlude'), false, 'Centering leaked into the next dialogue');
@@ -454,7 +455,7 @@ for (const snapshot of routeEndings) {
   assert.equal(nodes.get('retry-button').hidden, completed);
   assert.equal(document.activeElement, nodes.get(completed ? 'home-button' : 'retry-button'));
   assert.equal(document.activeElement.focusOptions.preventScroll, true);
-  assert.equal(nodes.get('ending-eyebrow').textContent, completed ? '故事落幕' : '本段故事結束');
+  assert.equal(nodes.get('ending-eyebrow').textContent, snapshot.state.current.category);
   if (completed) {
     assert.equal(nodes.get('ending-title').textContent, '全劇終');
     assert.equal(nodes.get('instruction').textContent, '故事已結束，感謝遊玩。');
@@ -501,3 +502,48 @@ console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'
   centeredInterludes:centeredPages,oldSaveInterlude:'passed',completedEndingWithoutRetry:'passed',incompleteRouteRetry:'passed',
   popupChoicePoints:choicePoints.size,popupOptions:choiceOptions.size,mouseSceneAndContinue:'passed',mouseFallback:'passed',
   mouseMovement:'passed',touchCompatibility:'passed',scrollAndLifecycleCancellation:'passed',menuAndVisibilityStop:'passed',endingStop:'passed',reducedMotion:'passed'}, null, 2));
+
+// Actual UI handlers ignore a non-existent option and persist both kinds of ending.
+{
+  const ui=await application();
+  const first=new GameEngine(story);first.start();
+  while(first.state.current.kind==='text')first.advance();
+  ui.context.choiceSnapshot=first.snapshot();ui.read('render(engine.restore(choiceSnapshot),{animate:false})');
+  assert(ui.nodes.get('instruction').textContent.includes('1、2 選擇'));
+  emit(ui.nodes.get('game-frame'),'keydown',{key:'3',code:'Digit3'});
+  assert.equal(ui.read('engine.state.current.kind'),'choice');assert.equal(ui.logs.length,0);
+  assert.equal(ui.nodes.get('toast').textContent,'');
+
+  const edits=JSON.parse(await readFile(new URL('./story_edits.json',import.meta.url),'utf8'));
+  ui.context.answers=Object.fromEntries(edits.choices.map(x=>[`${x.map}:${x.event}`,x.correct]));
+  ui.read('start()');
+  for(let guard=0; !ui.read('engine.state.ended') && guard<2000; guard++) {
+    if(ui.read('engine.state.current.kind')==='choice')ui.read('choose(answers[`${engine.state.mapId}:${engine.state.current.eventIndex}`])');
+    else ui.read('render(engine.advance(),{animate:false})');
+  }
+  assert.equal(ui.read("JSON.parse(localStorage.getItem('lianpo-story-v1')).auto.snapshot.state.current.completed"),true);
+  assert.equal(ui.read("JSON.parse(localStorage.getItem('lianpo-story-v1')).auto.snapshot.state.ended"),true);
+  assert(ui.nodes.get('ending-text').textContent.includes('刎頸之交'));
+  assert.equal(ui.nodes.get('ending-feedback').hidden,true);
+  emit(ui.nodes.get('home-button'),'click');assert.equal(ui.nodes.get('continue-button').textContent,'查看通關結局');
+  emit(ui.nodes.get('continue-button'),'click');assert.equal(ui.read('engine.state.current.kind'),'ending');
+  assert.equal(ui.nodes.get('retry-button').hidden,true);
+
+  const fixtures=JSON.parse(await readFile(new URL('./fixtures/legacy-saves.json',import.meta.url),'utf8'));
+  ui.context.failure=fixtures.punctuatedFailure;ui.read('render(engine.restore(failure),{animate:false})');
+  assert.equal(ui.nodes.get('ending-feedback').hidden,false);
+  emit(ui.nodes.get('home-button'),'click');assert.equal(ui.nodes.get('continue-button').textContent,'返回上次抉擇');
+  emit(ui.nodes.get('continue-button'),'click');assert.equal(ui.read('engine.state.current.kind'),'choice');
+  assert.equal(ui.read('engine.state.current.eventIndex'),686);
+  assert.equal(ui.logs.length,0);
+
+  const oldEntry={snapshot:fixtures.oldFinalCard,time:'2026-10-03T12:00:00.000Z',chapter:'負荊請罪',preview:'全劇終'};
+  const restored=await application(false,true,{auto:oldEntry,slots:[null,null,null],settings:{muted:false}});
+  assert.equal(restored.nodes.get('continue-button').textContent,'查看通關結局');
+  emit(restored.nodes.get('continue-button'),'click');
+  assert.equal(restored.read('engine.state.current.completed'),true);
+  assert.equal(restored.nodes.get('retry-button').hidden,true);
+  assert.equal(restored.logs.length,0);
+}
+console.log(JSON.stringify({twoOptionShortcut:'passed',completedAutosave:'passed',homeCompletedResume:'passed',
+  failureResumeAtChoice:'passed',oldCompletedAutosaveUpgrade:'passed'},null,2));

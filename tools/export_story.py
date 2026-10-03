@@ -2,6 +2,7 @@
 import sys,json,collections,hashlib
 from pathlib import Path
 from nrbf import Nrbf
+from revise_story import revise_story
 
 source=Path(sys.argv[1])
 target=Path(sys.argv[2])
@@ -36,6 +37,7 @@ assets=sorted({p.replace('\\','/') for m in maps for e in m['events'] for p in e
 out={'schema':1,'title':n.get(tree['projectName']),'width':960,'height':540,'startMap':system['startMapId'],
      'sourceHash':hashlib.sha256(source.read_bytes()).hexdigest(),'maps':maps,'assets':assets,
      'titleSettings':flat(system['title']),'talkSettings':flat(system['talk'])}
+out=revise_story(out)
 target.parent.mkdir(parents=True,exist_ok=True)
 target.write_text(json.dumps(out,ensure_ascii=False,separators=(',',':')))
 stats={'maps':[{ 'id':m['id'],'title':m['title'],'events':len(m['events']),'dialogue':sum(e['code']==100 for e in m['events']),'choices':sum(e['code']==101 for e in m['events'])} for m in maps],'assets':assets,'titleSettings':out['titleSettings'],'talkSettings':out['talkSettings']}
