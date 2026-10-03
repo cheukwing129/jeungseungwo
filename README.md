@@ -9,7 +9,7 @@
 - 儲存庫：[cheukwing129/jeungseungwo](https://github.com/cheukwing129/jeungseungwo)
 - 最近更新：2026-10-03
 - 文本版本：`20261003-text-flow`
-- 遊戲介面版本：`20261003-reliability`
+- 遊戲介面版本：`20261003-cache-audio`；載入檔案使用自動內容指紋
 
 ## 遊玩操作
 
@@ -32,6 +32,13 @@
 鍵盤快讀遇到選項會先停止，須放開空白鍵再作答，避免按鍵重複事件誤選。
 選項區是保留工具列操作的非模態問題區，可用 Tab 移到其他工具。快讀時
 暫停逐頁的讀屏播報，放開後播報目前一頁；到達選項或結局時播報該內容。
+
+音樂按鈕依播放狀態顯示「待啟動」、「載入中」、「開」、「關」、「暫停」
+或「未能播放」。首頁先等待操作；開始遊戲或點擊音樂按鈕後才嘗試播放。
+若瀏覽器阻擋或載入失敗，可按音樂按鈕重試。遊戲會預載已確定會播放的
+下一首，切歌時重用預載元素；遇到尚未作答的分岔不預載支線。關閉音樂、
+切到背景或開啟瀏覽器的節省數據模式時，停止額外預載。預載是瀏覽器提示，
+實際下載量及切歌等候時間仍受網絡和瀏覽器策略影響。
 
 ## 分支與存檔
 
@@ -79,6 +86,12 @@
 
 ## 最新修訂
 
+- 程式、樣式、劇情、素材對照及全部 45 個素材改用檔案內容指紋；依賴
+  更新會自動帶動入口網址更新，不再靠手動 `?v=`。
+- 新增 CSP、`nosniff` 等標頭；有指紋的檔案可快取一年，HTML 會重新驗證。
+- 改善音樂狀態、播放重試與下一首預載；WebMCP 改為預設關閉的實驗功能。
+- 新增明確 404 頁及舊素材網址轉向，避免不存在的網址誤進遊戲。
+- 原始碼整理到 `src/`，建置後輸出到 `dist/`，CI 檢查成品與原始碼一致。
 - 存檔改為分欄位寫入並同步其他分頁；各條路線及通關狀態獨立保存。
 - 自動存檔按兩秒間隔及重要劇情位置執行，避免逐頁序列化整份進度。
 - 加入空白鍵長按五倍速、快讀播報整理，以及動態選項編號和數字鍵 1–9。
@@ -111,7 +124,8 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory dist
 
 用瀏覽器開啟 [http://127.0.0.1:8000/](http://127.0.0.1:8000/)。請使用 HTTP
 伺服器；直接雙擊 `index.html` 可能因瀏覽器的本機檔案限制而無法讀取劇情。
-遊戲不需要安裝 npm 套件或執行建置。
+儲存庫已包含建置成品，直接遊玩毋須安裝 npm 套件或執行建置；若有修改，
+先按下一節的維護指令重新建置。
 
 ## Cloudflare Pages 部署
 
@@ -130,24 +144,46 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory dist
 `wrangler.toml` 已指定 `pages_build_output_dir = "./dist"`。正常以 `dist/`
 為發佈目錄時，入口是 `dist/index.html`；儲存庫根目錄的 `index.html`
 另提供跳轉到 `dist/` 的入口，供整個儲存庫被發佈時使用。
+目前保留 `exit 0`，直接發佈已提交並經 CI 核對的成品，毋須更改 Pages
+控制台設定。`404.html` 令未知路徑回傳找不到頁面；本遊戲沒有深層路由。
+
+`_headers` 只對 `build/` 與 `assets/content/` 的內容指紋檔案設定一年
+immutable 快取。HTML 重新驗證；舊的平面程式／資料網址沿用一般重新
+驗證行為，避免與長快取規則重疊。45 個舊素材網址透過 `_redirects`
+轉向原本相同內容的指紋檔，後續更新不會把已存在的舊轉向改指新內容。
 
 ## 專案與維護
 
 `dist/` 是可直接部署的完整成品，圖片、音樂及資料均使用本地相對路徑，
 沒有橙光驗證或 Google Drive 的執行時依賴。圖片與音樂按需載入。
+維護時修改 `src/`，不要直接修改生成的 `dist/`：
+
+```sh
+node tools/build.mjs
+```
+
+建置使用 Node.js 22 或更新版本，沒有外部套件。素材指紋來自實際檔案
+bytes；模組及資料的網址則依最終輸出內容計算。JSON 載入以模組網址為
+基準，避免移到 `build/` 後錯用頁面相對路徑。保留已發佈的內容指紋檔案，
+讓尚未重載的分頁及已快取的 HTML 仍可載入原版本；請勿直接清空 `dist/`。
 
 | 檔案 | 用途 |
 | --- | --- |
-| `dist/index.html`、`dist/styles.css` | 遊戲入口及桌面／手機版面 |
-| `dist/app.mjs` | 畫面、音樂、逐字顯示、劇情紀錄及存檔介面 |
-| `dist/engine.mjs` | 原始指令與分支播放器、舊存檔文字更新 |
-| `dist/pictures.mjs` | 立繪比例、貼底及圖片切換 |
-| `dist/dialogue-hold.mjs` | 滑鼠／觸控／鍵盤長按五倍速及停止、誤觸防護 |
-| `dist/storage.mjs` | 分欄位瀏覽器存檔、舊資料兼容及跨分頁路線合併 |
-| `dist/autosave.mjs` | 自動存檔間隔、重要位置即存及背景補存 |
-| `dist/replay.mjs` | 路線索引、通關紀錄、章節入口與最後抉擇的重玩位置 |
-| `dist/story.json` | 完整三章指令及核對後的文本 |
-| `dist/assets.json`、`dist/assets/` | 素材名稱對照及本地素材 |
+| `src/index.html`、`src/styles.css` | 遊戲入口及桌面／手機版面 |
+| `src/app.mjs` | 畫面、逐字顯示、劇情紀錄及存檔介面 |
+| `src/engine.mjs` | 原始指令與分支播放器、舊存檔文字更新 |
+| `src/pictures.mjs` | 立繪比例、貼底及圖片切換 |
+| `src/dialogue-hold.mjs` | 滑鼠／觸控／鍵盤長按五倍速及停止、誤觸防護 |
+| `src/storage.mjs` | 分欄位瀏覽器存檔、舊資料兼容及跨分頁路線合併 |
+| `src/autosave.mjs` | 自動存檔間隔、重要位置即存及背景補存 |
+| `src/replay.mjs` | 路線索引、通關紀錄、章節入口與最後抉擇的重玩位置 |
+| `src/music.mjs` | 音樂狀態、播放重試及一首預載的管理 |
+| `src/config.mjs`、`src/webmcp.mjs` | 預設關閉的 WebMCP 設定及獨立實驗介面 |
+| `src/story.json`、`src/assets.json`、`src/assets/` | 劇情、原素材對照及素材原檔 |
+| `src/_headers`、`src/404.html` | 安全／快取標頭及找不到頁面 |
+| `tools/build.mjs` | 內容指紋建置、舊素材轉向及成品產生 |
+| `dist/build-manifest.json`、`dist/build/` | 目前發佈指紋索引及帶指紋的程式／資料 |
+| `dist/assets/content/` | 帶內容指紋的素材，不重複發佈舊檔名副本 |
 | `tools/nrbf.py`、`tools/export_story.py` | 原始工程資料解析、指令抽取及分支位置建立 |
 | `tools/revise_story.py`、`tools/story_edits.json` | 可重複套用的文本、選項及結尾修訂，含核對來源 |
 
@@ -176,6 +212,9 @@ node tools/test_revision.mjs
 node tools/test_replay.mjs
 node tools/test_storage.mjs
 node tools/test_autosave.mjs
+node tools/test_build.mjs
+node tools/test_music.mjs
+node tools/test_webmcp.mjs
 ```
 
 目前自動化測試已通過全部 529 頁可見文本、14 個選擇點、32 個選項及
@@ -190,9 +229,16 @@ node tools/test_autosave.mjs
 停止。讀屏測試核對快讀時的 `aria-live` 狀態與恢復播報，並未使用實際
 螢幕閱讀器。新增第四個選項的測試同時核對數字鍵與 WebMCP 輸入範圍。
 
-`.github/workflows/game-checks.yml` 使用 Node.js 22 執行語法檢查及全部七組
-測試，無須 `package.json` 或安裝套件。修改 `dist/`、`tools/` 或工作流程
-本身時會觸發，也可在 GitHub Actions 手動執行。
+建置測試核對內容雜湊、依賴網址、45 個舊素材轉向、快取標頭沒有衝突、
+可重複建置、更新子模組／JSON／素材時連帶更新入口，以及保留舊內容。
+另檢查生成的正式入口能啟動、靜態內容符合 CSP 寫法，以及音樂被阻擋、
+網絡錯誤、預載重用、過期播放回應、靜音及背景暫停的模擬情況。
 
-實際手機與桌面瀏覽器的畫面及操作仍須試玩核對。可選的 WebMCP 功能
-只在偵測到支援時註冊；支援瀏覽器的實測尚未完成，一般遊玩不依賴此功能。
+`.github/workflows/game-checks.yml` 使用 Node.js 22 執行語法檢查、重新建置
+並核對成品，再執行全部十組測試。無須 `package.json` 或安裝套件。修改
+`src/`、`dist/`、`tools/` 或工作流程本身時會觸發，也可在 Actions 手動執行。
+
+實際手機、桌面瀏覽器、螢幕閱讀器及慢網絡音樂仍須試玩核對；模擬測試
+不代表已完成這些實測。WebMCP 預設關閉，連 `document.modelContext` 都
+不讀取；如需實驗，須將 `src/config.mjs` 的 `WEBMCP_ENABLED` 改為 `true`
+後重新建置。介面驗證及生命週期已有模擬測試，支援瀏覽器實測尚未完成。

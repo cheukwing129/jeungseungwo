@@ -1,4 +1,4 @@
-import {GameEngine} from './engine.mjs';
+import {GameEngine} from './engine.98655b91988440c18163.mjs';
 
 // Derive routes from the existing command graph without changing jump positions.
 function routesFrom(story) {

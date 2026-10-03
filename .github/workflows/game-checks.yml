@@ -3,11 +3,13 @@ name: Game checks
 on:
   push:
     paths:
+      - 'src/**'
       - 'dist/**'
       - 'tools/**'
       - '.github/workflows/game-checks.yml'
   pull_request:
     paths:
+      - 'src/**'
       - 'dist/**'
       - 'tools/**'
       - '.github/workflows/game-checks.yml'
@@ -37,9 +39,14 @@ jobs:
           package-manager-cache: false
       - name: Check JavaScript syntax
         run: |
-          for file in dist/*.mjs tools/test_*.mjs; do
+          for file in src/*.mjs dist/*.mjs dist/build/*.mjs tools/*.mjs; do
             node --check "$file"
           done
+      - name: Verify committed build output
+        run: |
+          node tools/build.mjs
+          git diff --exit-code -- dist
+          test -z "$(git ls-files --others --exclude-standard dist)"
       - name: Run all game tests
         run: |
           for test in tools/test_*.mjs; do

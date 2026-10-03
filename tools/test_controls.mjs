@@ -7,6 +7,9 @@ import {LocalSaves} from '../dist/storage.mjs';
 import {PictureRenderer} from '../dist/pictures.mjs';
 import {ReplayLibrary} from '../dist/replay.mjs';
 import {AutosaveScheduler} from '../dist/autosave.mjs';
+import {MusicPlayer,nextMusic} from '../dist/music.mjs';
+import {WEBMCP_ENABLED} from '../dist/config.mjs';
+import {registerGameTools} from '../dist/webmcp.mjs';
 
 class Clock {
   now = 0;
@@ -209,9 +212,11 @@ const story = JSON.parse(await readFile(new URL('../dist/story.json', import.met
 const assets = JSON.parse(await readFile(new URL('../dist/assets.json', import.meta.url), 'utf8'));
 const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
 const app = await readFile(new URL('../dist/app.mjs', import.meta.url), 'utf8');
+const buildManifest=JSON.parse(await readFile(new URL('../dist/build-manifest.json',import.meta.url),'utf8'));
+const builtApp=await readFile(new URL('../dist/'+buildManifest.entry,import.meta.url),'utf8');
 
 // Execute the actual application handlers against deterministic input and timers.
-async function application(reducedMotion = false, pointerEvents = true, savedValue = null, sharedMemory = new Map(), testStory = story) {
+async function application(reducedMotion = false, pointerEvents = true, savedValue = null, sharedMemory = new Map(), testStory = story, webMcp = WEBMCP_ENABLED, compiled = false) {
   const clock = new Clock(), {owner:document} = surfaces(pointerEvents), nodes = new Map(), stack = [];
   const voidTags = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
   for (const match of html.matchAll(/<(\/?)([a-z][a-z0-9-]*)(\s[^<>]*?)?>/gi)) {
@@ -229,9 +234,19 @@ async function application(reducedMotion = false, pointerEvents = true, savedVal
   const chapters = story.maps.map(map => { const node = new NodeStub(document); node.dataset.map = String(map.id); return node; });
   document.querySelectorAll = () => chapters;
   class ImageStub extends NodeStub { constructor() { super(document, 'img'); } }
-  class AudioStub extends EventTarget { play() { return Promise.resolve(); } pause() {} }
+  class AudioStub extends EventTarget {
+    constructor(src=''){super();this.src=src;this.paused=true;}
+    play(){this.paused=false;this.dispatchEvent(new Event('playing'));return Promise.resolve();}
+    pause(){const playing=!this.paused;this.paused=true;if(playing)this.dispatchEvent(new Event('pause'));}
+    load(){}
+    removeAttribute(name){if(name==='src')this.src='';}
+  }
+  class MusicWithStub extends MusicPlayer {
+    constructor(options){super({...options,createAudio:()=>new AudioStub(),canPreload:()=>true});}
+  }
   const registeredTools=new Map();
-  document.modelContext={registerTool:tool=>registeredTools.set(tool.name,tool)};
+  let modelContextReads=0;
+  Object.defineProperty(document,'modelContext',{get(){modelContextReads++;return {registerTool:tool=>registeredTools.set(tool.name,tool)};}});
   class HoldWithClock extends DialogueHold {
     constructor(element, options) { super(element, {...options, setTimer:clock.set, clearTimer:clock.clear}); }
   }
@@ -246,18 +261,25 @@ async function application(reducedMotion = false, pointerEvents = true, savedVal
   if(savedValue)memory.set('lianpo-story-v1',JSON.stringify(savedValue));
   const context = vm.createContext({
     document, GameEngine, plainText, textRuns, LocalSaves, ReplayLibrary, AutosaveScheduler:AutosaveWithClock, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
-    structuredClone, AbortController, matchMedia:() => ({matches:reducedMotion}), Audio:AudioStub,
+    MusicPlayer:MusicWithStub, nextMusic, WEBMCP_ENABLED:webMcp, registerGameTools,
+    structuredClone, AbortController, URL, moduleUrl:'https://game.test/'+(compiled?buildManifest.entry:'app.mjs'),
+    matchMedia:() => ({matches:reducedMotion}), Audio:AudioStub,
     localStorage:{getItem:key => memory.get(key) || null, setItem:(key, value) => {writes.push({key,value});memory.set(key, value);}},
-    fetch:async url => ({ok:true, json:async() => url.includes('story.json') ? testStory : assets}),
+    fetch:async url => {
+      const pathname=new URL(String(url),'https://game.test/').pathname.slice(1);
+      const expected=compiled?Object.keys(buildManifest.files).filter(file=>/^build\/(?:story|assets)\./.test(file)):['story.json','assets.json'];
+      assert(expected.includes(pathname),`Production JSON resolved against the wrong base: ${pathname}`);
+      return {ok:true,json:async()=>pathname.includes('story')?testStory:assets};
+    },
     setTimeout:clock.set, clearTimeout:clock.clear, requestAnimationFrame:callback => clock.set(callback, 0),
     addEventListener:document.defaultView.addEventListener.bind(document.defaultView),
     console:{error:error => logs.push(error)},
   });
-  vm.runInContext(app.replace(/^import .*;\n/gm, '').replace(/\ninit\(\);\s*$/, '\nglobalThis.ready=init();'), context);
+  vm.runInContext((compiled?builtApp:app).replace(/^import .*;\n/gm, '').replaceAll('import.meta.url','moduleUrl').replace(/\ninit\(\);\s*$/, '\nglobalThis.ready=init();'), context);
   await context.ready;
   assert.deepEqual(logs, [], 'Application initialization failed');
   const read = expression => vm.runInContext(expression, context);
-  return {clock, document, nodes, context, read, logs, memory, writes, registeredTools};
+  return {clock, document, nodes, context, read, logs, memory, writes, registeredTools, modelContextReads};
 }
 
 const {clock, document, nodes, context, read, logs} = await application();
@@ -697,7 +719,7 @@ console.log(JSON.stringify({twoOptionShortcut:'passed',completedAutosave:'passed
   const memory=new Map(), a=await application(false,true,null,memory), b=await application(false,true,null,memory);
   a.read('start();render(engine.advance(),{animate:false});saveSlot(0);closeDialog()');
   const running=a.read('engine.state.current.eventIndex');
-  b.read('start()');emit(b.nodes.get('music-button'),'click');
+  emit(b.nodes.get('start-button'),'click');emit(b.nodes.get('music-button'),'click');
   emit(a.document.defaultView,'storage',{key:'lianpo-story-v2:muted'});
   assert.equal(a.read('engine.state.current.eventIndex'),running);assert.equal(a.read('saved.settings.muted'),true);
   assert.equal(a.nodes.get('music-button').textContent,'音樂：關');assert(a.read('saved.slots[0]')!==null);
@@ -728,7 +750,7 @@ console.log(JSON.stringify({twoOptionShortcut:'passed',completedAutosave:'passed
   const expanded=structuredClone(story), map=expanded.maps.find(map=>map.events.some(event=>event.choices?.length===3));
   const eventIndex=map.events.findIndex(event=>event.choices?.length===3), event=map.events[eventIndex];
   event.choices.push({...event.choices[0],text:'第四項測試選項'});
-  const ui=await application(false,true,null,new Map(),expanded);
+  const ui=await application(false,true,null,new Map(),expanded,true);
   const initial=new GameEngine(expanded);initial.start();
   const checkpoint=initial.snapshot();checkpoint.state.mapId=map.id;checkpoint.state.pc=eventIndex+1;
   checkpoint.state.current={kind:'choice',eventIndex,choices:event.choices,prompt:event.prompt};
@@ -742,3 +764,23 @@ console.log(JSON.stringify({twoOptionShortcut:'passed',completedAutosave:'passed
 console.log(JSON.stringify({keyboardTapAndHold:'passed',repeatCannotAnswerChoice:'passed',lostKeyupRecovery:'passed',
   fastReadAnnouncements:'suppressed until release or checkpoint',autosaveSnapshots:'throttled',
   hideAndPagehideFlush:'passed',twoLiveApps:'passed',freshSlotLoad:'passed',fourthChoiceShortcutAndSchema:'passed'},null,2));
+
+// The generated production entry boots normally, keeps agent controls off and waits for audio activation.
+{
+  assert.equal(WEBMCP_ENABLED,false);
+  const ui=await application(false,true,null,new Map(),story,false,true);
+  assert.equal(ui.registeredTools.size,0);assert.equal(ui.modelContextReads,0);
+  assert.equal(ui.nodes.get('music-button').textContent,'音樂：待啟動');
+  assert.equal(ui.read('music.current'),null,'The homepage tried to play before a gesture');
+  assert.equal(ui.read("assetUrl('constructor')"),null);assert.equal(ui.read("assetUrl('__proto__')"),null);
+  ui.read("pictureRenderer.render({'1':{asset:'constructor'}},assets,{width:story.width,height:story.height})");
+  assert.equal(ui.read('pictureRenderer.active.size'),0);
+  emit(ui.nodes.get('music-button'),'click');
+  assert.equal(ui.read('saved.settings.muted'),false,'Activating waiting music toggled it off instead');
+  assert.equal(ui.nodes.get('music-button').textContent,'音樂：開');
+  emit(ui.nodes.get('music-button'),'click');assert.equal(ui.nodes.get('music-button').textContent,'音樂：關');
+  emit(ui.nodes.get('start-button'),'click');assert.equal(ui.read('engine.state.current.kind'),'text');
+  assert.deepEqual(ui.logs,[]);
+}
+console.log(JSON.stringify({productionFingerprintEntry:'passed',defaultWebMcp:'off without API access',
+  audioWaitsForGesture:'passed',audioActivationButton:'passed',prototypeAssetKeys:'rejected'},null,2));
