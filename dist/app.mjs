@@ -1,5 +1,6 @@
 import {GameEngine,plainText,textRuns} from './engine.mjs';
 import {LocalSaves} from './storage.mjs';
+import {PictureRenderer} from './pictures.mjs';
 
 const $ = id => document.getElementById(id);
 let story, assets, engine, saved, saves;
@@ -8,7 +9,7 @@ let started = false, busy = false, storageWarned = false;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const music = new Audio(); music.preload = 'none'; music.loop = true;
 let musicKey = ''; const sounds = new Set();
-const activePictures = new Map();
+const pictureRenderer = new PictureRenderer($('pictures'), {reducedMotion});
 
 function toast(message) {
   $('toast').textContent = message; $('toast').hidden = false;
@@ -53,32 +54,6 @@ function playEffects(effects) {
     sounds.add(audio);
     audio.addEventListener('ended',()=>sounds.delete(audio),{once:true});
     audio.play().catch(()=>sounds.delete(audio));
-  }
-}
-
-function renderPictures(pictures) {
-  const layer = $('pictures');
-  for (const [id,img] of activePictures) {
-    if (pictures[id]) continue;
-    img.style.opacity = '0'; activePictures.delete(id);
-    setTimeout(()=>img.remove(),reducedMotion?0:250);
-  }
-  for (const [id,picture] of Object.entries(pictures)) {
-    const asset = assets[picture.asset]; if (!asset) continue;
-    let img = activePictures.get(id);
-    const newImage = !img;
-    if (!img) {img=new Image();img.alt='';img.style.opacity='0';activePictures.set(id,img);layer.append(img);}
-    const src = asset.src;
-    if (img.dataset.asset !== src) {img.src=src;img.dataset.asset=src;}
-    img.style.left = `${picture.x/960*100}%`;
-    img.style.top = `${picture.y/540*100}%`;
-    img.style.width = `${asset.width*picture.sx/100/960*100}%`;
-    img.style.height = `${asset.height*picture.sy/100/540*100}%`;
-    img.style.zIndex = String(Number(id) || 0);
-    img.style.transform = picture.mirror ? 'scaleX(-1)' : 'none';
-    const opacity = String(Math.max(0,Math.min(255,picture.opacity))/255);
-    if (newImage && !reducedMotion) requestAnimationFrame(()=>{if(activePictures.get(id)===img)img.style.opacity=opacity;});
-    else img.style.opacity = opacity;
   }
 }
 
@@ -145,7 +120,7 @@ function render(result,{animate=true}={}) {
     label.classList.toggle('current',Number(label.dataset.map)===state.mapId);
     if(Number(label.dataset.map)===state.mapId)label.setAttribute('aria-current','step');else label.removeAttribute('aria-current');
   }
-  renderPictures(state.pictures);
+  pictureRenderer.render(state.pictures, assets, {width:story.width, height:story.height});
   if(current.kind==='text') {
     renderText(current.speaker,current.text,animate);
     $('instruction').textContent='點擊畫面或按空白鍵繼續；文字顯示時點一下可立即看完整段。';
