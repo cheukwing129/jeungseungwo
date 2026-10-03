@@ -28,7 +28,7 @@ function entry(snapshot) {
   const state = snapshot.state;
   const recent = [...state.history].reverse().find(item=>!item.choice);
   return {snapshot,time:new Date().toISOString(),chapter:engine.maps.get(state.mapId).title,
-    preview:plainText(recent?.text || '等待你的抉擇').trim().slice(0,48)};
+    preview:plainText(formatDialogue(recent?.speaker || '',recent?.text || '等待你的抉擇').text).trim().slice(0,48)};
 }
 
 function autosave() {
@@ -76,10 +76,21 @@ function completeText() {
   stopTyping(); scheduleAuto();
 }
 
+function formatDialogue(speaker,text) {
+  const visible=plainText(text),compact=visible.replace(/[ \t\u3000]+/g,'').trim();
+  const centered=!speaker && (/^[ \t\u3000]{2,}/.test(visible) ||
+    /^(?:序章(?:完)?|第[一二三]章(?:完|完璧歸趙|澠池之會|負荊請罪)|秦國‧章台|全劇終|完)$/.test(compact));
+  // Normalize at presentation time so older saves receive the same layout.
+  return {text:centered ? String(text).replaceAll('\\n','\n').replace(/[ \t\u3000]+/g,'').trim() : text,centered};
+}
+
 function renderText(speaker,text,animate) {
   stopTyping();
+  const presentation=formatDialogue(speaker,text);text=presentation.text;
+  $('dialogue').classList.toggle('interlude',presentation.centered);
+  $('speaker').hidden=presentation.centered;
   $('speaker').textContent = speaker || '旁白';
-  $('announcement').textContent = `${speaker || '旁白'}：${plainText(text)}`;
+  $('announcement').textContent = presentation.centered ? plainText(text) : `${speaker || '旁白'}：${plainText(text)}`;
   const target = $('story-text'); target.replaceChildren();
   const runs=textRuns(text),spans=[];
   for (const run of runs) {
@@ -116,7 +127,8 @@ function renderText(speaker,text,animate) {
 function scheduleAuto({fastTextDuration=0}={}) {
   clearTimeout(autoTimer);
   if ((!auto && !dialogueHold?.active) || typing || !started || $('menu-dialog').open || document.hidden || engine.state.current.kind!=='text') return;
-  const length=plainText(engine.state.current.text).length;
+  const current=engine.state.current;
+  const length=plainText(formatDialogue(current.speaker,current.text).text).length;
   const delay=dialogueHold?.active ? fastTextDuration/playbackRate() : Math.max(1500,Math.min(6000,length*40));
   autoTimer=setTimeout(next,delay);
 }
@@ -161,9 +173,13 @@ function render(result,{animate=true}={}) {
     stopTyping();
     $('ending-text').textContent=plainText(current.conclusion).trim();
     $('ending-title').textContent=current.completed?'全劇終':'本段劇情結束';
-    $('retry-button').hidden=!engine.lastChoice;
-    $('instruction').textContent='可以回到上一個選擇，探索另一條劇情。';
-    $('announcement').textContent=`本段劇情結束。${plainText(current.conclusion)}`;
+    $('ending-eyebrow').textContent=current.completed?'故事落幕':'本段故事結束';
+    $('retry-button').hidden=current.completed || !engine.lastChoice;
+    $('instruction').textContent=current.completed?'故事已結束，感謝遊玩。':'可以回到上一個選擇，重新作出抉擇。';
+    $('announcement').textContent=`${$('ending-title').textContent}。${plainText(current.conclusion)}`;
+    requestAnimationFrame(()=>{
+      if(engine.state.current.kind==='ending')($('retry-button').hidden?$('home-button'):$('retry-button')).focus({preventScroll:true});
+    });
   }
   syncMusic();playEffects(result.effects || []);
   if(!state.ended)autosave();
@@ -183,7 +199,7 @@ function choose(index) {
   try{
     render(engine.choose(index));
     if(engine.state.current.kind==='text')$('next-button').focus({preventScroll:true});
-    else if(engine.state.current.kind==='ending')$('retry-button').focus({preventScroll:true});
+    else if(engine.state.current.kind==='ending')($('retry-button').hidden?$('home-button'):$('retry-button')).focus({preventScroll:true});
   }catch(error){handleError(error);}finally{busy=false;}
 }
 function start() {auto=false;dialogueHold?.cancel();updateAuto();render(engine.start());}
@@ -239,9 +255,11 @@ function showHistory() {
   if(!engine.state)return;
   openDialog('劇情紀錄');const body=$('dialog-body');
   for(const item of engine.state.history) {
-    const node=document.createElement('div');node.className=`history-item${item.choice?' choice':''}`;
+    const presentation=formatDialogue(item.speaker,item.text);
+    const node=document.createElement('div');node.className=`history-item${item.choice?' choice':''}${presentation.centered?' interlude':''}`;
     const speaker=document.createElement('strong');speaker.textContent=item.speaker || '旁白';
-    node.append(speaker,paragraph('',plainText(item.text)));body.append(node);
+    speaker.hidden=presentation.centered;
+    node.append(speaker,paragraph('',plainText(presentation.text)));body.append(node);
   }
   requestAnimationFrame(()=>{$('menu-dialog').scrollTop=$('menu-dialog').scrollHeight;});
 }
@@ -315,7 +333,10 @@ async function init() {
     $('save-button').addEventListener('click',()=>showSlots('save'));
     $('load-button').addEventListener('click',()=>showSlots('load'));
     $('history-button').addEventListener('click',showHistory);
-    $('retry-button').addEventListener('click',()=>{auto=false;updateAuto();render(engine.retry(),{animate:false});});
+    $('retry-button').addEventListener('click',()=>{
+      if(engine.state.current.kind!=='ending' || engine.state.current.completed || !engine.lastChoice)return;
+      auto=false;updateAuto();render(engine.retry(),{animate:false});
+    });
     $('home-button').addEventListener('click',home);
     $('return-button').addEventListener('click',confirmHome);
     $('dialog-close').addEventListener('click',closeDialog);

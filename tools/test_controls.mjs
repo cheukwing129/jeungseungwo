@@ -46,7 +46,15 @@ class NodeStub extends EventTarget {
     this.dataset = {};
     this.style = {};
     this.attributes = {};
-    this.classList = {toggle(){}};
+    this.classes = new Set();
+    this.classList = {
+      toggle:(name, force) => {
+        const add = force === undefined ? !this.classes.has(name) : force;
+        if (add) this.classes.add(name); else this.classes.delete(name);
+        return Boolean(add);
+      },
+      contains:name => this.classes.has(name),
+    };
     this.open = false;
     this.captured = new Set();
     this.captureListeners = new Map();
@@ -251,6 +259,47 @@ function release() { emit(box, 'pointerup', pointer()); emit(box, 'click'); }
 const position = () => read('`${engine.state.mapId}:${engine.state.current.eventIndex}`');
 const pause = () => read('Math.max(1500,Math.min(6000,plainText(engine.state.current.text).length*40))');
 
+// Original interludes and chapter cards render without spacing used as layout padding.
+const interludePages = new Set(['1:30','1:226','1:229','1:446','1:512','1:597','1:605','1:728',
+  '1:882','1:969','1:1012','1:1177','2:1','2:252','2:316','2:343','2:375','2:479','2:554',
+  '3:1','3:136','3:301','3:379','3:460','3:509']);
+let centeredPages = 0;
+for (const map of story.maps) for (const [index, event] of map.events.entries()) {
+  if (event.code !== 100) continue;
+  context.testSpeaker = event.p[0]; context.testText = event.p[2];
+  const presentation = read('formatDialogue(testSpeaker,testText)');
+  const centered = interludePages.has(`${map.id}:${index}`);
+  assert.equal(presentation.centered, centered, `Wrong alignment for ${map.id}:${index}`);
+  if (centered) {
+    centeredPages++;
+    read('renderText(testSpeaker,testText,false)');
+    assert(nodes.get('dialogue').classList.contains('interlude'));
+    assert.equal(nodes.get('speaker').hidden, true);
+    assert.equal(nodes.get('story-text').textContent, plainText(event.p[2]).replace(/\s/g, ''));
+    assert.equal(nodes.get('announcement').textContent, nodes.get('story-text').textContent);
+  } else assert.equal(presentation.text, event.p[2], 'Ordinary dialogue text changed');
+}
+assert.equal(centeredPages, 25);
+const intro = story.maps[0].events.find(event => event.code === 100);
+context.testSpeaker = intro.p[0]; context.testText = intro.p[2]; read('renderText(testSpeaker,testText,false)');
+assert.equal(nodes.get('dialogue').classList.contains('interlude'), false, 'Centering leaked into the next dialogue');
+assert.equal(nodes.get('speaker').hidden, false);
+
+// Old saves keep their original source text while receiving the corrected visible layout.
+const prologueGame = new GameEngine(story); prologueGame.start();
+while (prologueGame.state.current.eventIndex < 30) prologueGame.advance();
+assert.equal(prologueGame.state.current.eventIndex, 30);
+context.oldInterludeSnapshot = JSON.parse(JSON.stringify(prologueGame.snapshot()));
+read('render(engine.restore(oldInterludeSnapshot),{animate:false})');
+assert.equal(nodes.get('story-text').textContent, '序章');
+assert(nodes.get('dialogue').classList.contains('interlude'));
+emit(nodes.get('history-button'), 'click');
+const historyInterlude = nodes.get('dialog-body').children.at(-1);
+assert(historyInterlude.className.includes('interlude'));
+assert.equal(historyInterlude.children[0].hidden, true);
+assert.equal(historyInterlude.children[1].textContent, '序章');
+emit(nodes.get('dialog-close'), 'click');
+
 emit(nodes.get('start-button'), 'click');
 const first = position();
 tap(); assert.equal(position(), first); assert.equal(read('typing'), null);
@@ -351,12 +400,12 @@ assert.equal(document.activeElement, nodes.get('next-button'));
 assert.equal(document.activeElement.focusOptions.preventScroll, true);
 
 // Every reachable choice renders its original buttons inside the scene popup.
-const choicePoints = new Set(), choiceOptions = new Set(), routeQueue = [], routeStart = new GameEngine(story);
+const choicePoints = new Set(), choiceOptions = new Set(), routeQueue = [], routeEndings = [], routeStart = new GameEngine(story);
 routeStart.start(); routeQueue.push(routeStart.snapshot());
 while (routeQueue.length) {
   const game = new GameEngine(story); game.restore(routeQueue.shift());
   while (game.state.current.kind === 'text') game.advance();
-  if (game.state.current.kind !== 'choice') continue;
+  if (game.state.current.kind !== 'choice') { routeEndings.push(game.snapshot()); continue; }
   const key = `${game.state.mapId}:${game.state.current.eventIndex}`;
   if (!choicePoints.has(key)) {
     context.popupSnapshot = game.snapshot(); read('render(engine.restore(popupSnapshot),{animate:false})');
@@ -395,6 +444,30 @@ release(); clock.advance(10000);
 assert.equal(read('engine.state.current.kind'), 'ending');
 assert.deepEqual(logs, [], 'A dialogue interaction threw an error');
 
+// Only incomplete routes offer another attempt. The unique completed ending returns home.
+assert.equal(routeEndings.length, 19);
+assert.equal(routeEndings.filter(snapshot => snapshot.state.current.completed).length, 1);
+for (const snapshot of routeEndings) {
+  context.routeEndingSnapshot = snapshot;
+  read('render(engine.restore(routeEndingSnapshot))'); clock.advance(0);
+  const completed = snapshot.state.current.completed;
+  assert.equal(nodes.get('retry-button').hidden, completed);
+  assert.equal(document.activeElement, nodes.get(completed ? 'home-button' : 'retry-button'));
+  assert.equal(document.activeElement.focusOptions.preventScroll, true);
+  assert.equal(nodes.get('ending-eyebrow').textContent, completed ? '故事落幕' : '本段故事結束');
+  if (completed) {
+    assert.equal(nodes.get('ending-title').textContent, '全劇終');
+    assert.equal(nodes.get('instruction').textContent, '故事已結束，感謝遊玩。');
+  }
+  emit(nodes.get('retry-button'), 'click');
+  assert.equal(read('engine.state.current.kind'), completed ? 'ending' : 'choice', 'Ending retry control has the wrong behavior');
+}
+context.completedSnapshot = routeEndings.find(snapshot => snapshot.state.current.completed);
+read('render(engine.restore(completedSnapshot))');
+emit(nodes.get('home-button'), 'click');
+assert.equal(read('started'), false); assert.equal(nodes.get('title-screen').hidden, false);
+assert.deepEqual(logs, [], 'An ending interaction threw an error');
+
 // Reduced motion presents static text at the same rate, without a chapter-skipping timer loop.
 const reduced = await application(true), reducedBox = reduced.nodes.get('dialogue');
 emit(reduced.nodes.get('start-button'), 'click');
@@ -425,5 +498,6 @@ mouseOnly.clock.advance(10000); assert.equal(mouseOnly.read('engine.state.curren
 
 console.log(JSON.stringify({shortTap:'passed',holdThreshold:'300 ms',textSpeed:'26 ms → 5.2 ms',
   pageWait:'none',immediateFirstGlyph:'passed',releaseWithoutExtraPage:'passed',normalAutoResume:'passed',choiceStop:'passed',
+  centeredInterludes:centeredPages,oldSaveInterlude:'passed',completedEndingWithoutRetry:'passed',incompleteRouteRetry:'passed',
   popupChoicePoints:choicePoints.size,popupOptions:choiceOptions.size,mouseSceneAndContinue:'passed',mouseFallback:'passed',
   mouseMovement:'passed',touchCompatibility:'passed',scrollAndLifecycleCancellation:'passed',menuAndVisibilityStop:'passed',endingStop:'passed',reducedMotion:'passed'}, null, 2));

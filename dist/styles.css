@@ -18,6 +18,11 @@ button{-webkit-tap-highlight-color:transparent}
 .dialogue{touch-action:pan-y pinch-zoom}
 .hold-status{font-size:.875rem;color:var(--gold);white-space:nowrap}
 
+/* Interludes use alignment rather than device-dependent space padding. */
+.dialogue.interlude .dialogue-inner{display:flex;flex-direction:column;justify-content:center}
+.dialogue.interlude .story-text{flex-shrink:0;text-align:center}
+.history-item.interlude p{text-align:center}
+
 /* Choices stay inside the scene and do not push the dialogue or page down. */
 .scene-choices{position:absolute;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:#07110bb8;backdrop-filter:blur(3px);cursor:default}
 .choice-dialog{width:min(100%,540px);max-height:100%;overflow:auto;padding:18px;border:1px solid #b29a67;border-radius:7px;background:#1f3028f5;box-shadow:0 12px 36px #0007}
