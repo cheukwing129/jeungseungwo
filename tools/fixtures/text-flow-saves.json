@@ -1,0 +1,2316 @@
+{
+  "waitingEnding": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "revision": "20261003-text-flow",
+    "state": {
+      "mapId": 1,
+      "pc": 732,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "3": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 116,
+          "y": 12,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/悲伤往事.mp3",
+        "volume": 0.7,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "ending",
+        "completed": false,
+        "conclusion": "趙王大失所望，將藺相如流放出國。",
+        "feedback": "被動等待不能確保秦王交城。原文中，相如先取回玉璧，以免失去制衡秦王的條件。",
+        "category": "假設情節",
+        "eventIndex": 731
+      },
+      "history": [
+        {
+          "speaker": "秦昭王",
+          "text": "哈哈哈哈！",
+          "mapId": 1,
+          "eventIndex": 678,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "秦王……",
+          "mapId": 1,
+          "eventIndex": 685,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "你的選擇",
+          "text": "忍讓等待秦王交城",
+          "choice": true,
+          "mapId": 1,
+          "eventIndex": 686,
+          "hypothetical": true
+        },
+        {
+          "speaker": "藺相如",
+          "text": "（算了，多等幾天看看吧。）",
+          "mapId": 1,
+          "eventIndex": 714,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "秦昭王",
+          "text": "嘻嘻！",
+          "mapId": 1,
+          "eventIndex": 718,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "幾天過後，秦王也沒有談及換城一事，\\n便把藺相如送回趙國了。",
+          "mapId": 1,
+          "eventIndex": 724,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "趙王大失所望，將藺相如流放出國。",
+          "mapId": 1,
+          "eventIndex": 726,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "完",
+          "mapId": 1,
+          "eventIndex": 728,
+          "interlude": true,
+          "hypothetical": true
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 1,
+          "text": "忍讓等待秦王交城",
+          "hypothetical": true
+        }
+      ],
+      "ended": true,
+      "hypothetical": true
+    },
+    "lastChoice": {
+      "mapId": 1,
+      "pc": 687,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "3": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 116,
+          "y": 12,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "4": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 506,
+          "y": 1,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": true
+        },
+        "5": {
+          "asset": "Half/武将_顔_810_通常.png",
+          "x": 322,
+          "y": -4,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/霸气男主出场.mp3",
+        "volume": 0.7,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "未取回璧便怒斥秦王",
+            "target": 688,
+            "end": 712,
+            "hypothetical": true
+          },
+          {
+            "text": "忍讓等待秦王交城",
+            "target": 713,
+            "end": 732,
+            "hypothetical": true
+          },
+          {
+            "text": "設法先取回玉璧",
+            "target": 733,
+            "end": 972,
+            "hypothetical": false
+          }
+        ],
+        "eventIndex": 686,
+        "prompt": "秦王無意交城，先做甚麼？"
+      },
+      "history": [
+        {
+          "speaker": "秦昭王",
+          "text": "來來來，小王你傳下去與諸位大臣們看看吧。",
+          "mapId": 1,
+          "eventIndex": 663,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "群臣",
+          "text": "春光似玉，盛世如璧！",
+          "mapId": 1,
+          "eventIndex": 667,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "群臣",
+          "text": "陛下得此寶物，真是天降祥瑞啊！",
+          "mapId": 1,
+          "eventIndex": 669,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "群臣",
+          "text": "萬歲！！",
+          "mapId": 1,
+          "eventIndex": 671,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "群臣",
+          "text": "萬歲！！",
+          "mapId": 1,
+          "eventIndex": 673,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "群臣",
+          "text": "萬歲！！萬歲！！",
+          "mapId": 1,
+          "eventIndex": 675,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "秦昭王",
+          "text": "哈哈哈哈！",
+          "mapId": 1,
+          "eventIndex": 678,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "秦王……",
+          "mapId": 1,
+          "eventIndex": 685,
+          "interlude": false,
+          "hypothetical": false
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        }
+      ],
+      "ended": false,
+      "hypothetical": false
+    }
+  },
+  "refusedMeetingEnding": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "revision": "20261003-text-flow",
+    "state": {
+      "mapId": 2,
+      "pc": 254,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_大殿内2.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/武将_顔_807_通常.png",
+          "x": 322,
+          "y": 10,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/悲伤往事.mp3",
+        "volume": 0.7,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "ending",
+        "completed": false,
+        "conclusion": "趙國無還手之力，終在三年後被滅國。",
+        "feedback": "不赴會可能示弱，卻不代表一定亡國。原文中，廉頗與相如勸趙王赴會，同時準備應變。",
+        "category": "假設情節",
+        "eventIndex": 253
+      },
+      "history": [
+        {
+          "speaker": "藺相如",
+          "text": "大王……",
+          "mapId": 2,
+          "eventIndex": 165,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "你的選擇",
+          "text": "拒絕赴會",
+          "choice": true,
+          "mapId": 2,
+          "eventIndex": 166,
+          "hypothetical": true
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我大趙乃泱泱大國，豈能屈於人下？\\n提倡議和者，當斬！",
+          "mapId": 2,
+          "eventIndex": 235,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "好，就與秦國決一死戰！",
+          "mapId": 2,
+          "eventIndex": 239,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "來人，傳話給秦使：「爾要戰，便戰！」",
+          "mapId": 2,
+          "eventIndex": 241,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "秦王得知趙國不願議和，便轉向楚國議和，\\n並在一怒之下，傾全國之力攻趙。",
+          "mapId": 2,
+          "eventIndex": 248,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "趙國無還手之力，終在三年後被滅國。",
+          "mapId": 2,
+          "eventIndex": 250,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "完",
+          "mapId": 2,
+          "eventIndex": 252,
+          "interlude": true,
+          "hypothetical": true
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 1,
+          "text": "拒絕赴會",
+          "hypothetical": true
+        }
+      ],
+      "ended": true,
+      "hypothetical": true
+    },
+    "lastChoice": {
+      "mapId": 2,
+      "pc": 167,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_大殿内2.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "3": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 118,
+          "y": -2,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/皇廷.mp3",
+        "volume": 0.7,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "應邀赴會，預備應變",
+            "target": 168,
+            "end": 233,
+            "hypothetical": false
+          },
+          {
+            "text": "拒絕赴會",
+            "target": 234,
+            "end": 254,
+            "hypothetical": true
+          }
+        ],
+        "eventIndex": 166,
+        "prompt": "是否應邀赴澠池會面？"
+      },
+      "history": [
+        {
+          "speaker": "秦使",
+          "text": "……是。",
+          "mapId": 2,
+          "eventIndex": 130,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "",
+          "text": "秦國使者離開",
+          "mapId": 2,
+          "eventIndex": 134,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "繆賢，秦國來使議和，\\n你說應如何是好？是戰是和？",
+          "mapId": 2,
+          "eventIndex": 137,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "繆賢",
+          "text": "大王，秦軍來勢洶洶，應暫時退讓，避其鋒芒。",
+          "mapId": 2,
+          "eventIndex": 144,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "廉將軍，你掌管大軍，以趙軍之力，足以抵抗秦軍嗎？",
+          "mapId": 2,
+          "eventIndex": 148,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "廉頗",
+          "text": "秦軍兵強，挾以連勝之勢來犯，士氣正盛。\\n但趙軍亦非可欺，三月之內，必退暴秦！",
+          "mapId": 2,
+          "eventIndex": 155,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "嗯。藺大夫，你認為如何？",
+          "mapId": 2,
+          "eventIndex": 159,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "大王……",
+          "mapId": 2,
+          "eventIndex": 165,
+          "interlude": false,
+          "hypothetical": false
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        }
+      ],
+      "ended": false,
+      "hypothetical": false
+    }
+  },
+  "bothAttendingEnding": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "revision": "20261003-text-flow",
+    "state": {
+      "mapId": 2,
+      "pc": 345,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_大殿内2.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/武将_顔_807_通常.png",
+          "x": 322,
+          "y": 10,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/悲伤往事.mp3",
+        "volume": 0.7,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "ending",
+        "completed": false,
+        "conclusion": "而廉頗雖勇，卻雙拳難敵四手，趙王終被秦國所擒。",
+        "feedback": "此支線的被擒是遊戲假設。原文以相如隨行、廉頗留守及後備安排，配合外交與軍事力量。",
+        "category": "假設情節",
+        "eventIndex": 344
+      },
+      "history": [
+        {
+          "speaker": "藺相如",
+          "text": "而廉頗亦勇冠三軍，讓他隨行，\\n若秦王心懷不軌，廉頗必能保駕！",
+          "mapId": 2,
+          "eventIndex": 322,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "好吧，我明白了。",
+          "mapId": 2,
+          "eventIndex": 326,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "藺相如，廉頗，你二人隨我赴會。",
+          "mapId": 2,
+          "eventIndex": 328,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "來人，傳話給秦使，孤王將與秦王相會於\\c[255,0,0]澠池\\c[50,50,50]。",
+          "mapId": 2,
+          "eventIndex": 330,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "趙王於是前去澠池，藺相如與廉頗均隨行赴會。",
+          "mapId": 2,
+          "eventIndex": 334,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "然而秦王在澠池之會上忽然發難，藺相如雖提前察覺，\\n卻已深入敵陣，無法退離。",
+          "mapId": 2,
+          "eventIndex": 339,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "而廉頗雖勇，卻雙拳難敵四手，趙王終被秦國所擒。",
+          "mapId": 2,
+          "eventIndex": 341,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "完",
+          "mapId": 2,
+          "eventIndex": 343,
+          "interlude": true,
+          "hypothetical": true
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "應邀赴會，預備應變",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 2,
+          "text": "相如與廉頗一同隨行",
+          "hypothetical": true
+        }
+      ],
+      "ended": true,
+      "hypothetical": true
+    },
+    "lastChoice": {
+      "mapId": 2,
+      "pc": 266,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_大殿内2.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "3": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 118,
+          "y": -2,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/对战.mp3",
+        "volume": 0.7,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "相如隨行，廉頗留守",
+            "target": 267,
+            "end": 295,
+            "hypothetical": false
+          },
+          {
+            "text": "廉頗隨行，相如留守",
+            "target": 296,
+            "end": 318,
+            "hypothetical": true
+          },
+          {
+            "text": "相如與廉頗一同隨行",
+            "target": 319,
+            "end": 345,
+            "hypothetical": true
+          }
+        ],
+        "eventIndex": 265,
+        "prompt": "按原文，如何安排赴會？"
+      },
+      "history": [
+        {
+          "speaker": "藺相如",
+          "text": "顯得趙國膽小。",
+          "mapId": 2,
+          "eventIndex": 206,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "廉頗",
+          "text": "此後只會被天下人恥笑！",
+          "mapId": 2,
+          "eventIndex": 213,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "以後秦國來犯就更加肆無忌憚！",
+          "mapId": 2,
+          "eventIndex": 216,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "廉頗",
+          "text": "國將不國！",
+          "mapId": 2,
+          "eventIndex": 223,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "危如累卵！",
+          "mapId": 2,
+          "eventIndex": 226,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "（這、這兩人何時這麼合拍？）",
+          "mapId": 2,
+          "eventIndex": 230,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "趙惠文王",
+          "text": "可、可是，如果秦王有陰謀怎麼辦？",
+          "mapId": 2,
+          "eventIndex": 232,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "大王……",
+          "mapId": 2,
+          "eventIndex": 264,
+          "interlude": false,
+          "hypothetical": false
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "應邀赴會，預備應變",
+          "hypothetical": false
+        }
+      ],
+      "ended": false,
+      "hypothetical": false
+    }
+  },
+  "thirdChapterChoice": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "revision": "20261003-text-flow",
+    "state": {
+      "mapId": 3,
+      "pc": 294,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 299,
+          "y": -16,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/懸疑.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "害怕廉頗，不敢與他相爭",
+            "target": 295,
+            "end": 303,
+            "hypothetical": false
+          },
+          {
+            "text": "先公後私，避免內鬥削弱趙國",
+            "target": 304,
+            "end": 463,
+            "hypothetical": false
+          }
+        ],
+        "eventIndex": 293,
+        "prompt": "相如為何避讓廉頗？"
+      },
+      "history": [
+        {
+          "speaker": "門客三號",
+          "text": "足智多謀！威風凜凜！",
+          "mapId": 3,
+          "eventIndex": 254,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "能保全趙國，不只是我一人的功勞。",
+          "mapId": 3,
+          "eventIndex": 258,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客們",
+          "text": "但你現在就是一隻膽小鬼啊！",
+          "mapId": 3,
+          "eventIndex": 266,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我連秦王都不怕了，還會怕廉將軍嗎？",
+          "mapId": 3,
+          "eventIndex": 271,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客們",
+          "text": "（你就是很怕啊！）",
+          "mapId": 3,
+          "eventIndex": 279,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "（門客只看見我退讓，還未明白我的用意……）",
+          "mapId": 3,
+          "eventIndex": 287,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "諸位不妨再想一想，我避讓廉將軍的用意。",
+          "mapId": 3,
+          "eventIndex": 290,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我連秦王都不怕，為何仍一再避讓廉將軍？",
+          "mapId": 3,
+          "eventIndex": 292,
+          "interlude": false,
+          "hypothetical": false
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "應邀赴會，預備應變",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "相如隨行，廉頗留守",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "挺身近前，冒死維護對等",
+          "hypothetical": false
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "顧全國家，避讓廉頗",
+          "hypothetical": false
+        }
+      ],
+      "ended": false,
+      "hypothetical": false
+    },
+    "lastChoice": {
+      "mapId": 3,
+      "pc": 294,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 299,
+          "y": -16,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/懸疑.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "害怕廉頗，不敢與他相爭",
+            "target": 295,
+            "end": 303,
+            "hypothetical": false
+          },
+          {
+            "text": "先公後私，避免內鬥削弱趙國",
+            "target": 304,
+            "end": 463,
+            "hypothetical": false
+          }
+        ],
+        "eventIndex": 293,
+        "prompt": "相如為何避讓廉頗？"
+      },
+      "history": [
+        {
+          "speaker": "門客三號",
+          "text": "足智多謀！威風凜凜！",
+          "mapId": 3,
+          "eventIndex": 254,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "能保全趙國，不只是我一人的功勞。",
+          "mapId": 3,
+          "eventIndex": 258,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客們",
+          "text": "但你現在就是一隻膽小鬼啊！",
+          "mapId": 3,
+          "eventIndex": 266,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我連秦王都不怕了，還會怕廉將軍嗎？",
+          "mapId": 3,
+          "eventIndex": 271,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客們",
+          "text": "（你就是很怕啊！）",
+          "mapId": 3,
+          "eventIndex": 279,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "（門客只看見我退讓，還未明白我的用意……）",
+          "mapId": 3,
+          "eventIndex": 287,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "諸位不妨再想一想，我避讓廉將軍的用意。",
+          "mapId": 3,
+          "eventIndex": 290,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我連秦王都不怕，為何仍一再避讓廉將軍？",
+          "mapId": 3,
+          "eventIndex": 292,
+          "interlude": false,
+          "hypothetical": false
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "應邀赴會，預備應變",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "相如隨行，廉頗留守",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "挺身近前，冒死維護對等",
+          "hypothetical": false
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "顧全國家，避讓廉頗",
+          "hypothetical": false
+        }
+      ],
+      "ended": false,
+      "hypothetical": false
+    }
+  },
+  "banquetEnding": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "revision": "20261003-text-flow",
+    "state": {
+      "mapId": 3,
+      "pc": 511,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_会客室7.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/武将_顔_830_通常.png",
+          "x": 317,
+          "y": -3,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/悲伤往事.mp3",
+        "volume": 0.7,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "ending",
+        "completed": false,
+        "conclusion": "趙國終未能團結內部的力量，屢起內鬥，\n終被強秦所滅。",
+        "feedback": "設宴後的遭遇是遊戲假設。原文中，相如因不願將相內鬥而避讓；廉頗得知其以國家為先的胸襟後，負荊請罪。",
+        "category": "假設情節",
+        "eventIndex": 510
+      },
+      "history": [
+        {
+          "speaker": "藺相如",
+          "text": "（奉上酒水）敬……",
+          "mapId": 3,
+          "eventIndex": 477,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "廉頗",
+          "text": "（打翻酒杯）你不配！",
+          "mapId": 3,
+          "eventIndex": 484,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "藺相如",
+          "text": "……",
+          "mapId": 3,
+          "eventIndex": 491,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "廉頗",
+          "text": "你只是一個小小的門客！\\n你憑甚麼位居高位！",
+          "mapId": 3,
+          "eventIndex": 497,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "廉頗",
+          "text": "只會三番四次的逞口舌之爭，要爭就用你的拳頭把江山爭回來！\\n你還是個男人嗎你！",
+          "mapId": 3,
+          "eventIndex": 499,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "藺相如認為廉頗為奪功名口出狂言，\\n將私讎置於國家危難之前，實屬不智，轉身離開。",
+          "mapId": 3,
+          "eventIndex": 503,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "趙國終未能團結內部的力量，屢起內鬥，\\n終被強秦所滅。",
+          "mapId": 3,
+          "eventIndex": 505,
+          "interlude": false,
+          "hypothetical": true
+        },
+        {
+          "speaker": "",
+          "text": "完",
+          "mapId": 3,
+          "eventIndex": 509,
+          "interlude": true,
+          "hypothetical": true
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "應邀赴會，預備應變",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "相如隨行，廉頗留守",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "挺身近前，冒死維護對等",
+          "hypothetical": false
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 2,
+          "text": "設宴討好廉頗",
+          "hypothetical": true
+        }
+      ],
+      "ended": true,
+      "hypothetical": true
+    },
+    "lastChoice": {
+      "mapId": 3,
+      "pc": 95,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_茶室1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 43,
+          "y": 1,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/魂の剣は折れぬ.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "向趙王告狀，要求貶抑廉頗",
+            "target": 96,
+            "end": 138,
+            "hypothetical": true
+          },
+          {
+            "text": "顧全國家，避讓廉頗",
+            "target": 139,
+            "end": 464,
+            "hypothetical": false
+          },
+          {
+            "text": "設宴討好廉頗",
+            "target": 465,
+            "end": 511,
+            "hypothetical": true
+          }
+        ],
+        "eventIndex": 94,
+        "prompt": "如何面對廉頗揚言羞辱？"
+      },
+      "history": [
+        {
+          "speaker": "趙惠文王",
+          "text": "……",
+          "mapId": 3,
+          "eventIndex": 67,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "廉頗",
+          "text": "你別讓我見到他，下次我一見到他，",
+          "mapId": 3,
+          "eventIndex": 71,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "廉頗",
+          "text": "我！一！定！會！將！他！羞！辱！至！死！",
+          "mapId": 3,
+          "eventIndex": 73,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "",
+          "text": "當日，在藺相如府中。",
+          "mapId": 3,
+          "eventIndex": 78,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "小官",
+          "text": "今日發生了這樣這樣一件事……",
+          "mapId": 3,
+          "eventIndex": 81,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我本一介草民，忽然得拜上卿，\\n廉將軍對我恨意極深，亦是情有可原。",
+          "mapId": 3,
+          "eventIndex": 85,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "小官",
+          "text": "藺大人打算如何應對？",
+          "mapId": 3,
+          "eventIndex": 89,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "如今之計……",
+          "mapId": 3,
+          "eventIndex": 93,
+          "interlude": false,
+          "hypothetical": false
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "應邀赴會，預備應變",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "相如隨行，廉頗留守",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "挺身近前，冒死維護對等",
+          "hypothetical": false
+        }
+      ],
+      "ended": false,
+      "hypothetical": false
+    }
+  },
+  "completedEnding": {
+    "schema": 1,
+    "sourceHash": "74baf15600967668808125431c0943e731663cb4f4a1f8082618286dc8473169",
+    "revision": "20261003-text-flow",
+    "state": {
+      "mapId": 3,
+      "pc": 462,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_会客室1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "3": {
+          "asset": "Half/武将_顔_846_通常.png",
+          "x": 20,
+          "y": 30,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "4": {
+          "asset": "Half/0002.png",
+          "x": 599,
+          "y": 33,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        },
+        "5": {
+          "asset": "Half/20130812103451-268094303.png",
+          "x": 74,
+          "y": 3,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 0,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/暮砪腔枘雞ㄗ袚砪﹜朸贈ㄘ.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "ending",
+        "completed": true,
+        "conclusion": "廉頗與藺相如釋怨和解，成為刎頸之交。\n將相同心，先國家之急而後私讎，共同守護趙國。",
+        "feedback": "",
+        "category": "故事落幕",
+        "eventIndex": 461
+      },
+      "history": [
+        {
+          "speaker": "廉頗",
+          "text": "將軍您才是智謀超卓，運籌帷幄的真‧將軍",
+          "mapId": 3,
+          "eventIndex": 432,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "廉頗",
+          "text": "我……（雙目通紅）",
+          "mapId": 3,
+          "eventIndex": 435,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "我……（目光微暖）",
+          "mapId": 3,
+          "eventIndex": 438,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客們",
+          "text": "（這……怎麼怪怪的？）",
+          "mapId": 3,
+          "eventIndex": 447,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "",
+          "text": "二人釋懷和解，成為刎頸之交。\n將相同心，以國家之急為先，共同守護趙國。",
+          "mapId": 3,
+          "eventIndex": 454,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "",
+          "text": "史事延伸：廉頗此後仍為趙國建立戰功。\n長平之戰時，相如病重，曾勸趙王不要以趙括代廉頗。",
+          "mapId": 3,
+          "eventIndex": 456,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "",
+          "text": "趙孝成王未採納勸告，終以趙括代廉頗。\n趙軍在長平大敗，大量降卒遭坑殺，趙國自此元氣大傷。",
+          "mapId": 3,
+          "eventIndex": 458,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "",
+          "text": "全劇終",
+          "mapId": 3,
+          "eventIndex": 460,
+          "interlude": true,
+          "hypothetical": false
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "應邀赴會，預備應變",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "相如隨行，廉頗留守",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "挺身近前，冒死維護對等",
+          "hypothetical": false
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "顧全國家，避讓廉頗",
+          "hypothetical": false
+        },
+        {
+          "mapId": 3,
+          "event": 293,
+          "index": 1,
+          "text": "先公後私，避免內鬥削弱趙國",
+          "hypothetical": false
+        },
+        {
+          "mapId": 3,
+          "event": 371,
+          "index": 1,
+          "text": "廉頗聞知心意，負荊請罪",
+          "hypothetical": false
+        }
+      ],
+      "ended": true,
+      "hypothetical": false
+    },
+    "lastChoice": {
+      "mapId": 3,
+      "pc": 372,
+      "pictures": {
+        "2": {
+          "asset": "Background/540_御书房1.jpg",
+          "x": 0,
+          "y": 0,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        },
+        "4": {
+          "asset": "Half/0002.png",
+          "x": 577,
+          "y": 21,
+          "sx": 100,
+          "sy": 100,
+          "opacity": 255,
+          "mirror": false
+        }
+      },
+      "music": {
+        "asset": "BGM/懸疑.mp3",
+        "volume": 0.6,
+        "loop": true
+      },
+      "variables": {
+        "功績": 100
+      },
+      "current": {
+        "kind": "choice",
+        "choices": [
+          {
+            "text": "相如先登門賠罪",
+            "target": 373,
+            "end": 381,
+            "hypothetical": true
+          },
+          {
+            "text": "廉頗聞知心意，負荊請罪",
+            "target": 382,
+            "end": 462,
+            "hypothetical": false
+          }
+        ],
+        "eventIndex": 371,
+        "prompt": "按原文，二人如何釋怨？"
+      },
+      "history": [
+        {
+          "speaker": "門客們",
+          "text": "（跪下）君！！！！！！",
+          "mapId": 3,
+          "eventIndex": 340,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客們",
+          "text": "您用心良苦啊！！！！！！！！！！！！！",
+          "mapId": 3,
+          "eventIndex": 342,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "（倍感欣慰）",
+          "mapId": 3,
+          "eventIndex": 347,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "藺相如",
+          "text": "吾所以為此者，以先國家之急而後私讎也。\n國家的危難，應放在個人的恩怨之前。",
+          "mapId": 3,
+          "eventIndex": 349,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客一號",
+          "text": "原來您顧全大局。只是廉將軍尚未明白您的心意。",
+          "mapId": 3,
+          "eventIndex": 352,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客三號",
+          "text": "我們先前只看見表面的退讓，誤會您了。",
+          "mapId": 3,
+          "eventIndex": 358,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客二號",
+          "text": "我們可以請您親自登門，嘗試與廉將軍和解。",
+          "mapId": 3,
+          "eventIndex": 364,
+          "interlude": false,
+          "hypothetical": false
+        },
+        {
+          "speaker": "門客三號",
+          "text": "也可讓廉將軍知道，您忍讓是為了趙國。\n事情或許就有轉機了。",
+          "mapId": 3,
+          "eventIndex": 370,
+          "interlude": false,
+          "hypothetical": false
+        }
+      ],
+      "decisions": [
+        {
+          "mapId": 1,
+          "event": 97,
+          "index": 1,
+          "text": "分析趙強燕弱的形勢",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 158,
+          "index": 0,
+          "text": "主動請罪，爭取獲赦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 430,
+          "index": 1,
+          "text": "先答應，再要求履約",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 483,
+          "index": 1,
+          "text": "相如自薦",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 686,
+          "index": 2,
+          "text": "設法先取回玉璧",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 753,
+          "index": 0,
+          "text": "據理力爭，以頭與璧相逼",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 859,
+          "index": 1,
+          "text": "要求齋戒及九賓，爭取時間",
+          "hypothetical": false
+        },
+        {
+          "mapId": 1,
+          "event": 989,
+          "index": 1,
+          "text": "派從者改裝，秘密送璧歸趙",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 166,
+          "index": 0,
+          "text": "應邀赴會，預備應變",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 265,
+          "index": 0,
+          "text": "相如隨行，廉頗留守",
+          "hypothetical": false
+        },
+        {
+          "mapId": 2,
+          "event": 455,
+          "index": 1,
+          "text": "挺身近前，冒死維護對等",
+          "hypothetical": false
+        },
+        {
+          "mapId": 3,
+          "event": 94,
+          "index": 1,
+          "text": "顧全國家，避讓廉頗",
+          "hypothetical": false
+        },
+        {
+          "mapId": 3,
+          "event": 293,
+          "index": 1,
+          "text": "先公後私，避免內鬥削弱趙國",
+          "hypothetical": false
+        }
+      ],
+      "ended": false,
+      "hypothetical": false
+    }
+  }
+}

@@ -15,7 +15,9 @@ def revise_story(story, edits=None):
         if event['code'] != 100:
             raise ValueError(f"Text position changed: {change['map']}:{change['event']}")
         actual = {'speaker': event['p'][0], 'text': event['p'][2]}
-        if actual not in (change['before'], change['after']):
+        # Accept earlier reviewed wording as well as the original and latest text.
+        # The original remains in `before` for importing the binary and old saves.
+        if actual not in [change['before'], change['after'], *change.get('previous', [])]:
             raise ValueError(f"Text no longer matches review: {change['map']}:{change['event']}")
         event['legacy'] = copy.deepcopy(change['before'])
         event['p'][0] = change['after']['speaker']
@@ -26,7 +28,8 @@ def revise_story(story, edits=None):
             event['skipText'] = True
     for change in edits['choices']:
         event = maps[change['map']]['events'][change['event']]
-        if event['code'] != 101 or event['p'] not in (change['before'], change['after']):
+        accepted = [change['before'], change['after'], *change.get('previous', [])]
+        if event['code'] != 101 or event['p'] not in accepted:
             raise ValueError(f"Choice no longer matches review: {change['map']}:{change['event']}")
         if len(event['choices']) != len(change['after']):
             raise ValueError('Reviewed choices must retain the original branch count')
