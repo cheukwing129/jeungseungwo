@@ -10,6 +10,7 @@ import {AutosaveScheduler} from '../dist/autosave.mjs';
 import {MusicPlayer,nextMusic} from '../dist/music.mjs';
 import {WEBMCP_ENABLED} from '../dist/config.mjs';
 import {registerGameTools} from '../dist/webmcp.mjs';
+import {guideSections,guideGlossary,locateGuideSection} from '../dist/guide.mjs';
 
 class Clock {
   now = 0;
@@ -59,6 +60,7 @@ class NodeStub extends EventTarget {
         return Boolean(add);
       },
       contains:name => this.classes.has(name),
+      remove:name => this.classes.delete(name),
     };
     this.open = false;
     this.captured = new Set();
@@ -66,6 +68,8 @@ class NodeStub extends EventTarget {
   }
   get textContent() { return this.children.length ? this.children.map(child => child.textContent).join('') : this.text || ''; }
   set textContent(text) { this.text = String(text); this.children = []; }
+  get id() { return this.attributes.id || ''; }
+  set id(value) { this.attributes.id = String(value); }
   append(...children) { for (const child of children) { child.parent = this; this.children.push(child); } }
   replaceChildren(...children) { this.children = []; this.text = ''; this.append(...children); }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this); }
@@ -74,6 +78,7 @@ class NodeStub extends EventTarget {
       part = part.trim();
       if (part.startsWith('[')) return Object.hasOwn(this.attributes, part.slice(1, -1));
       if (part.startsWith('#')) return this.attributes.id === part.slice(1);
+      if (part.startsWith('.')) return this.classes.has(part.slice(1)) || String(this.className || '').split(/\s+/).includes(part.slice(1));
       return part === this.tag;
     });
   }
@@ -89,6 +94,12 @@ class NodeStub extends EventTarget {
     }
     return null;
   }
+  querySelectorAll(selector) {
+    return this.children.flatMap(child => [
+      ...(child.matches(selector) ? [child] : []), ...child.querySelectorAll(selector),
+    ]);
+  }
+  scrollIntoView(options) { this.scrollOptions = options; }
   focus(options) { this.ownerDocument.activeElement = this; this.focusOptions = options; }
   addEventListener(type, callback, options) {
     if (options === true || options?.capture) {
@@ -225,14 +236,15 @@ async function application(reducedMotion = false, pointerEvents = true, savedVal
     const node = new NodeStub(document, tag);
     for (const attr of attributes.matchAll(/([\w-]+)(?:="([^"]*)")?/g)) node.setAttribute(attr[1], attr[2] || '');
     if (node.attributes.id) nodes.set(node.attributes.id, node);
-    stack.at(-1)?.append(node);
+    (stack.at(-1) || document).append(node);
     if (!voidTags.has(tag)) stack.push(node);
   }
   assert.equal(stack.length, 0);
-  document.getElementById = id => nodes.get(id);
+  document.getElementById = id => nodes.get(id) || document.querySelector(`#${id}`);
   document.createElement = tag => new NodeStub(document, tag);
+  document.createTextNode = text => { const node = new NodeStub(document, '#text'); node.textContent = text; return node; };
   const chapters = story.maps.map(map => { const node = new NodeStub(document); node.dataset.map = String(map.id); return node; });
-  document.querySelectorAll = () => chapters;
+  document.querySelectorAll = selector => selector === '.chapter' ? chapters : NodeStub.prototype.querySelectorAll.call(document, selector);
   class ImageStub extends NodeStub { constructor() { super(document, 'img'); } }
   class AudioStub extends EventTarget {
     constructor(src=''){super();this.src=src;this.paused=true;}
@@ -262,6 +274,7 @@ async function application(reducedMotion = false, pointerEvents = true, savedVal
   const context = vm.createContext({
     document, GameEngine, plainText, textRuns, LocalSaves, ReplayLibrary, AutosaveScheduler:AutosaveWithClock, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
     MusicPlayer:MusicWithStub, nextMusic, WEBMCP_ENABLED:webMcp, registerGameTools,
+    guideSections,guideGlossary,locateGuideSection,
     structuredClone, AbortController, URL, moduleUrl:'https://game.test/'+(compiled?buildManifest.entry:'app.mjs'),
     matchMedia:() => ({matches:reducedMotion}), Audio:AudioStub,
     localStorage:{getItem:key => memory.get(key) || null, setItem:(key, value) => {writes.push({key,value});memory.set(key, value);}},
@@ -784,3 +797,91 @@ console.log(JSON.stringify({keyboardTapAndHold:'passed',repeatCannotAnswerChoice
 }
 console.log(JSON.stringify({productionFingerprintEntry:'passed',defaultWebMcp:'off without API access',
   audioWaitsForGesture:'passed',audioActivationButton:'passed',prototypeAssetKeys:'rejected'},null,2));
+
+// The guide uses the real UI handlers and keeps the running story and manual saves in place.
+for(const compiled of [false,true]) {
+  const ui=await application(false,true,null,new Map(),story,false,compiled);
+  const get=id=>ui.document.getElementById(id);
+  emit(ui.nodes.get('guide-button'),'click');ui.clock.advance(0);
+  assert.equal(ui.nodes.get('dialog-title').textContent,'攻略');
+  assert(ui.nodes.get('menu-dialog').open);
+  assert(ui.nodes.get('menu-dialog').classList.contains('guide-mode'));
+  assert.equal(ui.read('guideGameIndex'),0);
+  assert.equal(ui.document.querySelectorAll('.guide-passage').length,10);
+  assert(get('guide-previous').disabled);
+  assert.equal(get('guide-next').disabled,false);
+  assert(get('guide-people').scrollOptions);
+
+  const term=ui.document.querySelectorAll('.guide-term').find(node=>node.textContent==='上卿');
+  emit(term,'click');
+  assert(get('guide-gloss-definition').textContent.includes('戰國時代的高級官員'));
+  assert.equal(get('guide-gloss-source').textContent,'教育局篇章註釋');
+  const added=ui.document.querySelectorAll('.guide-term').find(node=>node.textContent==='相如止臣');
+  emit(added,'click');assert.equal(get('guide-gloss-source').textContent,'補充詞解');
+  emit(get('guide-next'),'click');ui.clock.advance(0);
+  assert.equal(ui.read('guideReadingIndex'),1);
+  assert.equal(get('guide-return-to-progress').hidden,false);
+  get('guide-section-select').value='9';emit(get('guide-section-select'),'change');ui.clock.advance(0);
+  assert(get('guide-next').disabled);
+  assert.equal(get('guide-apology').getAttribute('aria-current'),'location');
+  assert.equal(ui.document.querySelectorAll('.guide-passage').filter(node=>node.getAttribute('aria-current')).length,1);
+  emit(get('guide-return-to-progress'),'click');ui.clock.advance(0);
+  assert.equal(ui.read('guideReadingIndex'),0);assert(get('guide-return-to-progress').hidden);
+  ui.read("showSlots('load')");
+  assert.equal(ui.nodes.get('menu-dialog').classList.contains('guide-mode'),false);
+  assert.equal(ui.document.querySelectorAll('.guide-passage').length,0,'Guide content leaked into another menu');
+  ui.read('closeDialog();start()');
+
+  const current=ui.read('JSON.stringify(engine.snapshot())'), slots=ui.read('JSON.stringify(saved.slots)');
+  emit(ui.nodes.get('dialogue'),'pointerdown',pointer());ui.clock.advance(300);
+  assert.equal(ui.read('dialogueHold.active'),true);
+  emit(ui.nodes.get('guide-button'),'click');
+  assert.equal(ui.read('dialogueHold.active'),false);
+  emit(ui.nodes.get('dialogue'),'pointerup',pointer());emit(ui.nodes.get('dialogue'),'click');
+  ui.clock.advance(10000);
+  assert.equal(ui.read('JSON.stringify(engine.snapshot())'),current);
+  assert.equal(ui.read('JSON.stringify(saved.slots)'),slots);
+  emit(ui.nodes.get('dialog-close'),'click');
+  assert.equal(ui.nodes.get('menu-dialog').open,false);
+  assert.equal(ui.nodes.get('menu-dialog').classList.contains('guide-mode'),false);
+  ui.read('next()');assert.notEqual(ui.read('JSON.stringify(engine.snapshot())'),current);
+
+  // A question cannot be answered by a digit or term click behind the open guide.
+  const first=new GameEngine(story);first.start();while(first.state.current.kind==='text')first.advance();
+  ui.context.question=first.snapshot();ui.read('render(engine.restore(question),{animate:false})');
+  const questionBefore=ui.read('JSON.stringify(engine.snapshot())');
+  emit(ui.nodes.get('guide-button'),'click');
+  emit(get('guide-next'),'click');
+  emit(get('guide-next'),'keydown',{key:'1',code:'Digit1'});
+  assert.equal(ui.read('JSON.stringify(engine.snapshot())'),questionBefore);
+  emit(ui.nodes.get('dialog-close'),'click');emit(ui.nodes.get('choices').children[0],'click');
+  assert.notEqual(ui.read('JSON.stringify(engine.snapshot())'),questionBefore);
+
+  ui.read('start();auto=true;updateAuto();completeText();showGuide()');
+  const paused=ui.read('engine.state.current.eventIndex');ui.clock.advance(10000);
+  assert.equal(ui.read('engine.state.current.eventIndex'),paused);
+  emit(ui.nodes.get('dialog-close'),'click');
+  ui.clock.advance(ui.read('Math.max(1500,Math.min(6000,plainText(engine.state.current.text).length*40))'));
+  assert.notEqual(ui.read('engine.state.current.eventIndex'),paused,'Normal autoplay did not resume after closing the guide');
+  assert.deepEqual(ui.logs,[]);
+}
+
+// Initialization restores manual entries for migration; the homepage guide must still follow the autosave.
+{
+  const fixtures=JSON.parse(await readFile(new URL('./fixtures/text-flow-saves.json',import.meta.url),'utf8'));
+  const item=snapshot=>({snapshot,time:'2026-10-04T02:00:00.000Z',chapter:'測試存檔',preview:'測試'});
+  const state={auto:item(fixtures.bothAttendingEnding),slots:[item(fixtures.completedEnding),null,null],settings:{muted:true}};
+  const ui=await application(false,true,state), autoMap=state.auto.snapshot.state.mapId;
+  assert.equal(ui.read('engine.state.mapId'),3);
+  emit(ui.nodes.get('guide-button'),'click');
+  assert.equal(guideSections[ui.read('guideGameIndex')].mapId,autoMap);
+  ui.read('closeDialog()');emit(ui.nodes.get('continue-button'),'click');
+  emit(ui.nodes.get('guide-button'),'click');
+  assert.equal(ui.read('guideGameIndex'),ui.read('locateGuideSection(engine.state.mapId,engine.state.current.eventIndex)'));
+  const manualOnly=await application(false,true,{...state,auto:null});
+  emit(manualOnly.nodes.get('guide-button'),'click');assert.equal(manualOnly.read('guideGameIndex'),0);
+  assert.deepEqual(ui.logs,[]);assert.deepEqual(manualOnly.logs,[]);
+}
+console.log(JSON.stringify({guideProductionUi:'passed',guideNavigationAndGlosses:'passed',
+  guideHoldAndAutoPause:'passed',guideStoryAndSavePreservation:'passed',
+  guideHomepageAutosavePriority:'passed',guideMenuCleanup:'passed'},null,2));

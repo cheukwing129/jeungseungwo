@@ -7,12 +7,14 @@ import {DialogueHold} from './dialogue-hold.mjs';
 import {MusicPlayer,nextMusic} from './music.mjs';
 import {WEBMCP_ENABLED} from './config.mjs';
 import {registerGameTools} from './webmcp.mjs';
+import {guideSections,guideGlossary,locateGuideSection} from './guide.mjs';
 
 const $ = id => document.getElementById(id);
 let story, assets, engine, saved, saves, dialogueHold, replay, autosave;
 let typing = null, typeTimer = 0, autoTimer = 0, auto = false, toastTimer = 0;
 let started = false, busy = false, storageWarned = false;
 let renderedMapId = null, rendering = false, pendingAnnouncement = '', activeSlotsMode = null;
+let guideGameIndex = 0, guideReadingIndex = 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const music = new MusicPlayer({onChange:()=>{if(saved)updateMusic();}});
 const sounds = new Set();
@@ -263,10 +265,11 @@ function updateMusic() {
 function endingAction() {return engine.state.current.completed ? $('ending-chapters-button') :
   $('retry-button').hidden ? $('home-button') : $('retry-button');}
 
-function openDialog(title) {
+function openDialog(title,variant='') {
   dialogueHold?.cancel();
   completeText();clearTimeout(autoTimer);
   autosave.flush();activeSlotsMode = null;
+  $('menu-dialog').classList.toggle('guide-mode',variant==='guide');
   $('dialog-title').textContent=title;$('dialog-body').replaceChildren();
   $('menu-dialog').scrollTop=0;
   if(!$('menu-dialog').open)$('menu-dialog').showModal();
@@ -404,6 +407,113 @@ function showHistory() {
   requestAnimationFrame(()=>{$('menu-dialog').scrollTop=$('menu-dialog').scrollHeight;});
 }
 
+function progressForGuide() {
+  // The engine may contain a restored manual slot while the homepage is visible.
+  const live=started ? engine?.state : null;
+  const state=live || saved?.auto?.snapshot?.state;
+  if(!state)return {mapId:story?.startMap || 1,eventIndex:0};
+  return {mapId:state.mapId,eventIndex:state.current?.eventIndex ?? Math.max(0,state.pc-1)};
+}
+
+function updateGuideNavigation() {
+  const section=guideSections[guideReadingIndex],current=guideSections[guideGameIndex];
+  const previous=$('guide-previous'),nextButton=$('guide-next'),select=$('guide-section-select');
+  if(!section || !previous || !nextButton || !select)return;
+  previous.disabled=guideReadingIndex===0;
+  nextButton.disabled=guideReadingIndex===guideSections.length-1;
+  select.value=String(guideReadingIndex);
+  $('guide-position').textContent=guideReadingIndex===guideGameIndex
+    ? `遊戲進度：${current.title}。`
+    : `遊戲進度：${current.title}；正在閱讀：${section.title}。`;
+  $('guide-return-to-progress').hidden=guideReadingIndex===guideGameIndex;
+  document.querySelectorAll('.guide-passage').forEach((node,index)=>{
+    if(index===guideReadingIndex)node.setAttribute('aria-current','location');
+    else node.removeAttribute('aria-current');
+  });
+}
+
+function navigateGuide(index,{scroll=true}={}) {
+  guideReadingIndex=Math.max(0,Math.min(guideSections.length-1,index));
+  updateGuideNavigation();
+  if(scroll)requestAnimationFrame(()=>{
+    document.getElementById(`guide-${guideSections[guideReadingIndex].id}`)?.scrollIntoView({
+      block:'start',behavior:reducedMotion?'auto':'smooth',
+    });
+  });
+}
+
+function showGuideGloss(gloss) {
+  $('guide-gloss-title').textContent=`詞語：${gloss.term}`;
+  $('guide-gloss-definition').textContent=gloss.definition;
+  $('guide-gloss-source').textContent=gloss.source==='edb'?'教育局篇章註釋':'補充詞解';
+}
+
+function appendGuideText(text,parent) {
+  const sorted=[...guideGlossary].sort((a,b)=>b.term.length-a.term.length);
+  let cursor=0,plain='';
+  const flush=()=>{if(plain){parent.append(document.createTextNode(plain));plain='';}};
+  while(cursor<text.length) {
+    const gloss=sorted.find(item=>text.startsWith(item.term,cursor));
+    if(!gloss){plain+=text[cursor++];continue;}
+    flush();
+    const button=document.createElement('button');
+    button.type='button';button.className='guide-term';button.textContent=gloss.term;
+    button.setAttribute('aria-label',`查看詞解：${gloss.term}`);
+    button.addEventListener('click',()=>showGuideGloss(gloss));
+    parent.append(button);cursor+=gloss.term.length;
+  }
+  flush();
+}
+
+function showGuide() {
+  const progress=progressForGuide();
+  guideGameIndex=locateGuideSection(progress.mapId,progress.eventIndex);
+  guideReadingIndex=guideGameIndex;
+  openDialog('攻略','guide');
+  const body=$('dialog-body');
+  const intro=paragraph('guide-intro','底線詞語可點擊查看詞解。原文會依遊戲進度定位，也可前後閱讀。');
+
+  const controls=document.createElement('div');controls.className='guide-controls';
+  const previous=document.createElement('button');previous.id='guide-previous';previous.type='button';previous.textContent='上一段';
+  previous.addEventListener('click',()=>navigateGuide(guideReadingIndex-1));
+  const selectLabel=document.createElement('label');selectLabel.className='guide-select-label';selectLabel.htmlFor='guide-section-select';selectLabel.textContent='原文位置';
+  const select=document.createElement('select');select.id='guide-section-select';
+  guideSections.forEach((section,index)=>{
+    const option=document.createElement('option');option.value=String(index);option.textContent=`${index+1}. ${section.title}`;select.append(option);
+  });
+  select.addEventListener('change',()=>navigateGuide(Number(select.value)));
+  const nextButton=document.createElement('button');nextButton.id='guide-next';nextButton.type='button';nextButton.textContent='下一段';
+  nextButton.addEventListener('click',()=>navigateGuide(guideReadingIndex+1));
+  const returnButton=document.createElement('button');returnButton.id='guide-return-to-progress';returnButton.type='button';returnButton.className='guide-return';returnButton.textContent='回到遊戲進度';
+  returnButton.addEventListener('click',()=>navigateGuide(guideGameIndex));
+  controls.append(previous,selectLabel,select,nextButton,returnButton);
+  const position=paragraph('guide-position','');position.id='guide-position';
+
+  const glossPanel=document.createElement('aside');glossPanel.className='guide-gloss-panel';glossPanel.setAttribute('aria-live','polite');glossPanel.setAttribute('aria-atomic','true');
+  const glossTitle=document.createElement('strong');glossTitle.id='guide-gloss-title';glossTitle.textContent='詞解';
+  const glossDefinition=paragraph('guide-gloss-definition','點擊底線詞語查看解釋。');glossDefinition.id='guide-gloss-definition';
+  const glossSource=paragraph('guide-gloss-source','');glossSource.id='guide-gloss-source';
+  glossPanel.append(glossTitle,glossDefinition,glossSource);
+
+  const article=document.createElement('article');article.className='guide-article';
+  guideSections.forEach((section,index)=>{
+    const sectionNode=document.createElement('section');sectionNode.className='guide-passage';sectionNode.id=`guide-${section.id}`;
+    const heading=document.createElement('h3');heading.textContent=`${index+1}. ${section.title}`;
+    const textNode=document.createElement('p');textNode.className='guide-text';appendGuideText(section.text,textNode);
+    sectionNode.append(heading,textNode);article.append(sectionNode);
+  });
+
+  const references=document.createElement('p');references.className='guide-references';
+  references.append(document.createTextNode('原文與註釋參考：教育局《建議篇章配套資料》（第四學習階段）〈廉頗藺相如列傳（節錄）〉。'));
+  const textLink=document.createElement('a');textLink.href='https://www.edb.gov.hk/attachment/tc/curriculum-development/kla/chi-edu/recommended-passages/ks4_08_text.pdf';textLink.target='_blank';textLink.rel='noopener noreferrer';textLink.textContent='篇章原文';
+  const noteLink=document.createElement('a');noteLink.href='https://www.edb.gov.hk/attachment/tc/curriculum-development/kla/chi-edu/recommended-passages/KS4_08.pdf';noteLink.target='_blank';noteLink.rel='noopener noreferrer';noteLink.textContent='篇章註釋';
+  references.append(document.createTextNode(' '),textLink,document.createTextNode('｜'),noteLink);
+  article.append(references);
+  body.append(intro,controls,position,glossPanel,article);
+  updateGuideNavigation();
+  requestAnimationFrame(()=>document.getElementById(`guide-${guideSections[guideReadingIndex].id}`)?.scrollIntoView({block:'start'}));
+}
+
 function home() {
   dialogueHold?.cancel();
   autosave.flush();
@@ -529,6 +639,7 @@ async function init() {
     $('save-button').addEventListener('click',()=>showSlots('save'));
     $('load-button').addEventListener('click',()=>showSlots('load'));
     $('history-button').addEventListener('click',showHistory);
+    $('guide-button').addEventListener('click',showGuide);
     $('retry-button').addEventListener('click',()=>{
       if(engine.state.current.kind!=='ending' || engine.state.current.completed || !engine.lastChoice)return;
       auto=false;updateAuto();render(engine.retry(),{animate:false,saveNow:true});
@@ -536,7 +647,11 @@ async function init() {
     $('home-button').addEventListener('click',home);
     $('return-button').addEventListener('click',confirmHome);
     $('dialog-close').addEventListener('click',closeDialog);
-    $('menu-dialog').addEventListener('close',()=>{activeSlotsMode=null;scheduleAuto();});
+    $('menu-dialog').addEventListener('close',()=>{
+      activeSlotsMode=null;
+      $('menu-dialog').classList.remove('guide-mode');
+      scheduleAuto();
+    });
     document.addEventListener('keydown',event=>{
       if(event.defaultPrevented || $('menu-dialog').open || event.altKey || event.ctrlKey || event.metaKey || event.repeat)return;
       if(event.target.closest('input,select,textarea,a'))return;
