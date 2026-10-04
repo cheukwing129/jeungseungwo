@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "hash": "SHA-256/80",
-  "entry": "build/app.35a0cfed44cb6af84e1d.mjs",
+  "entry": "build/app.41b24fed3975d5959c0c.mjs",
   "files": {
     "assets/content/1131931ed81f0ef9c238.png": "1131931ed81f0ef9c238",
     "assets/content/9754f6b6fdf3a23de914.jpg": "9754f6b6fdf3a23de914",
@@ -60,8 +60,8 @@
     "build/config.b7e49eefe77eb1d3aa8d.mjs": "b7e49eefe77eb1d3aa8d",
     "build/webmcp.31eb8431a184ab982384.mjs": "31eb8431a184ab982384",
     "build/guide-notes.4cfe50fac2aa44879fcd.mjs": "4cfe50fac2aa44879fcd",
-    "build/guide.de69d06ded97d76f57bf.mjs": "de69d06ded97d76f57bf",
-    "build/app.35a0cfed44cb6af84e1d.mjs": "35a0cfed44cb6af84e1d",
+    "build/guide.8e64ee1a7bf285e83c44.mjs": "8e64ee1a7bf285e83c44",
+    "build/app.41b24fed3975d5959c0c.mjs": "41b24fed3975d5959c0c",
     "build/styles.ff69799448630ca47984.css": "ff69799448630ca47984"
   }
 }

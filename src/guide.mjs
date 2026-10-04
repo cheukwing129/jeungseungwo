@@ -234,13 +234,18 @@ export function guideAnnotations(sectionId) {
 
 /** A click exposes the local word sense plus overlapping phrases and sentence structure. */
 export function guideNotesAt(sectionId,start,end=start+1) {
-  const priority=note=>note.kind==='word' ? (note.contextual?0:1) : note.kind==='phrase'?2:3;
+  const priority=note=>{
+    // Keep the original EDB phrase first when it overlaps supplemental word or grammar notes.
+    if(note.source==='edb')return note.kind==='phrase'?0:1;
+    return note.kind==='word' ? (note.contextual?2:3) : note.kind==='phrase'?4:5;
+  };
   const notes=guideAnnotations(sectionId).filter(note=>note.start<end && note.end>start)
     .sort((a,b)=>priority(a)-priority(b) || a.term.length-b.term.length);
   const seen=new Set();
   return notes.filter(note=>{
-    // A word's POS-enriched definition replaces a duplicate old gloss for that same word.
-    const key=`${note.kind==='sentence'?'sentence':'vocabulary'}:${note.term}`;
+    // Deduplicate identical content, preserving distinct word senses and POS supplements.
+    const key=JSON.stringify([note.kind==='sentence'?'sentence':'vocabulary',note.source,
+      note.term,note.definition,note.partOfSpeech || '',note.label || '']);
     if(seen.has(key))return false;seen.add(key);return true;
   });
 }

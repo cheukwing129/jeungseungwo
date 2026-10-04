@@ -500,7 +500,7 @@ function showGuide() {
   guideReadingIndex=guideGameIndex;
   openDialog('攻略','guide');
   const body=$('dialog-body');
-  const intro=paragraph('guide-intro','點擊底線字詞查看本句詞性與詞義；各段「句式與用法」可展開。詞義依教育局注釋或另列補充，詞性與句式按語境補充。');
+  const intro=paragraph('guide-intro','點擊底線字詞查看注釋；重疊時優先顯示教育局原注，補充詞義、詞性及句式可展開查看。各段另有「句式與用法」清單。');
 
   const controls=document.createElement('div');controls.className='guide-controls';
   const previous=document.createElement('button');previous.id='guide-previous';previous.type='button';previous.textContent='上一段';

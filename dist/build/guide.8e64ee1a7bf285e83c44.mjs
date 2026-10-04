@@ -1,4 +1,4 @@
-import {guideBasicWords,guideContextWords,guideGrammar,guideProtectedTerms} from './guide-notes.mjs';
+import {guideBasicWords,guideContextWords,guideGrammar,guideProtectedTerms} from './guide-notes.4cfe50fac2aa44879fcd.mjs';
 
 // 原文及篇章註釋以香港教育局《建議篇章配套資料》第四學習階段第八篇為準。
 // 遊戲是重製的互動改編，以下位置按章節和事件編號定位至最接近的原文段落。

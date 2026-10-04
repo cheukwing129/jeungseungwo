@@ -820,9 +820,10 @@ for(const compiled of [false,true]) {
   emit(added,'click');assert.equal(get('guide-gloss-source').textContent,'補充詞解');
   const once=ui.document.querySelectorAll('.guide-term').find(node=>node.textContent==='嘗');
   emit(once,'click');assert(get('guide-gloss-definition').textContent.includes('副詞｜曾經'));
-  const planned=ui.document.querySelectorAll('.guide-term').find(node=>node.textContent==='計' && node.getAttribute('aria-label').includes('動詞'));
-  emit(planned,'click');assert(get('guide-gloss-definition').textContent.includes('動詞｜計劃'));
-  assert(get('guide-gloss-related').textContent.includes('竊計'));
+  const planned=ui.document.querySelectorAll('.guide-term').find(node=>node.textContent==='計' && node.getAttribute('aria-label').includes('竊計'));
+  emit(planned,'click');assert(get('guide-gloss-definition').textContent.includes('私下'));
+  assert.equal(get('guide-gloss-source').textContent,'教育局篇章註釋');
+  assert(get('guide-gloss-related').textContent.includes('動詞｜計劃'));
   const fronted=ui.document.querySelectorAll('.guide-sentence-button').find(node=>node.textContent.startsWith('何以知之'));
   emit(fronted,'click');assert(get('guide-gloss-definition').textContent.includes('以何知之'));
   assert(get('guide-gloss-definition').textContent.includes('賓語前置'));

@@ -130,7 +130,18 @@ for(const [id,quote,term,pos,meaning,occurrence=0] of [
 const planned=wordAt('miao-xian','竊計欲亡走燕','計');
 assert(planned.notes.some(note=>note.kind==='phrase' && note.term==='竊計'),'The original phrase note was lost');
 const planRun=guideTextRuns('miao-xian').find(run=>run.start<=planned.start && run.end>planned.start);
-assert.equal(planRun.annotations[0].term,'計','A long phrase still hides the basic word');
+assert.equal(planRun.annotations[0].term,'竊計','The original EDB phrase must take precedence');
+assert.equal(planRun.annotations[0].source,'edb');
+assert(planRun.annotations.some(note=>note.term==='計' && note.partOfSpeech==='動詞'),
+  'The supplemental local word sense must remain available');
+for(const section of guideSections)for(const run of guideTextRuns(section.id)) {
+  if(run.annotations.some(note=>note.source==='edb'))assert.equal(run.annotations[0].source,'edb',
+    `EDB priority was lost at ${section.id}:${run.start}`);
+}
+const rankNotes=guideAnnotations('return-jade').filter(note=>note.term==='堅明約束');
+const rank=guideNotesAt('return-jade',rankNotes[0].start,rankNotes[0].end);
+assert.equal(rank[0].kind,'phrase','Preserve the original EDB gloss before the POS-enriched version');
+assert(rank.some(note=>note.kind==='word' && note.partOfSpeech),'Overlapping POS information was discarded');
 const question=wordAt('miao-xian','何以知之','以');
 assert(question.notes.some(note=>note.kind==='sentence' && note.definition.includes('以何知之')));
 
