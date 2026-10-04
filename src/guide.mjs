@@ -1,3 +1,5 @@
+import {guideBasicWords,guideContextWords,guideGrammar,guideProtectedTerms} from './guide-notes.mjs';
+
 // 原文及篇章註釋以香港教育局《建議篇章配套資料》第四學習階段第八篇為準。
 // 遊戲是重製的互動改編，以下位置按章節和事件編號定位至最接近的原文段落。
 export const guideSections = [
@@ -181,3 +183,75 @@ export const guideGlossary = [
   added('其勢不俱生','按當時形勢，兩人不能同時保全性命。'),
   added('因賓客至藺相如門謝罪','經由賓客引領，來到藺相如府上認錯賠罪。「因」是經由、藉着。'),
 ];
+
+export {guideBasicWords,guideContextWords,guideGrammar};
+export const guideAnnotationStats = Object.freeze({
+  originalGlosses:guideGlossary.length,
+  basicWords:guideBasicWords.length,
+  contextualUses:guideContextWords.length,
+  sentenceNotes:guideGrammar.length,
+});
+
+const annotationCache=new Map();
+function occurrences(text,term) {
+  const starts=[];
+  for(let start=0;(start=text.indexOf(term,start))!==-1;start+=term.length)starts.push(start);
+  return starts;
+}
+
+/** Resolve every note against the unchanged original passage, retaining overlapping word and sentence notes. */
+export function guideAnnotations(sectionId) {
+  if(annotationCache.has(sectionId))return annotationCache.get(sectionId);
+  const section=guideSections.find(item=>item.id===sectionId);
+  if(!section)throw new Error(`Unknown guide section: ${sectionId}`);
+  const {text}=section,notes=[],words=new Map();
+  const add=(note,start,kind,contextual=false)=>({
+    ...note,start,end:start+note.term.length,kind,contextual,
+  });
+  const protectedRanges=guideProtectedTerms.flatMap(term=>occurrences(text,term).map(start=>({term,start,end:start+term.length})));
+  for(const note of guideGlossary)for(const start of occurrences(text,note.term))notes.push(add(note,start,'phrase'));
+  const basic=guideBasicWords.flatMap(note=>occurrences(text,note.term).map(start=>add(note,start,'word')));
+  for(const note of basic) {
+    // Do not interpret 如 in 相如, 夫 in 大夫, or 好 in 好會 as standalone vocabulary.
+    if(protectedRanges.some(range=>range.term!==note.term && range.start<=note.start && range.end>=note.end))continue;
+    if(basic.some(other=>other.term.length>note.term.length && other.start<=note.start && other.end>=note.end))continue;
+    words.set(`${note.start}:${note.end}`,note);
+  }
+  for(const note of guideContextWords.filter(item=>item.sectionId===sectionId)) {
+    const anchors=occurrences(text,note.context);
+    if(anchors.length!==1)throw new Error(`Ambiguous guide word: ${sectionId}:${note.context}`);
+    const start=anchors[0]+note.offset;
+    if(text.slice(start,start+note.term.length)!==note.term)throw new Error(`Invalid guide word anchor: ${note.context}`);
+    words.set(`${start}:${start+note.term.length}`,add(note,start,'word',true));
+  }
+  notes.push(...words.values());
+  for(const note of guideGrammar.filter(item=>item.sectionId===sectionId)) {
+    for(const start of occurrences(text,note.term))notes.push(add(note,start,'sentence'));
+  }
+  const result=Object.freeze(notes.map(note=>Object.freeze(note)));
+  annotationCache.set(sectionId,result);return result;
+}
+
+/** A click exposes the local word sense plus overlapping phrases and sentence structure. */
+export function guideNotesAt(sectionId,start,end=start+1) {
+  const priority=note=>note.kind==='word' ? (note.contextual?0:1) : note.kind==='phrase'?2:3;
+  const notes=guideAnnotations(sectionId).filter(note=>note.start<end && note.end>start)
+    .sort((a,b)=>priority(a)-priority(b) || a.term.length-b.term.length);
+  const seen=new Set();
+  return notes.filter(note=>{
+    // A word's POS-enriched definition replaces a duplicate old gloss for that same word.
+    const key=`${note.kind==='sentence'?'sentence':'vocabulary'}:${note.term}`;
+    if(seen.has(key))return false;seen.add(key);return true;
+  });
+}
+
+/** Split only at vocabulary boundaries; sentence notes never turn punctuation into buttons. */
+export function guideTextRuns(sectionId) {
+  const section=guideSections.find(item=>item.id===sectionId),notes=guideAnnotations(sectionId);
+  const boundaries=[...new Set([0,section.text.length,...notes.filter(note=>note.kind!=='sentence').flatMap(note=>[note.start,note.end])])].sort((a,b)=>a-b);
+  return boundaries.slice(0,-1).map((start,index)=>{
+    const end=boundaries[index+1],annotations=guideNotesAt(sectionId,start,end);
+    return {text:section.text.slice(start,end),start,end,
+      annotations:annotations.some(note=>note.kind!=='sentence')?annotations:[]};
+  });
+}

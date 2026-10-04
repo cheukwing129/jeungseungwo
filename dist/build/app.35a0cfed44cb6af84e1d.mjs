@@ -1,13 +1,13 @@
-import {GameEngine,plainText,textRuns} from './engine.mjs';
-import {LocalSaves} from './storage.mjs';
-import {ReplayLibrary} from './replay.mjs';
-import {AutosaveScheduler} from './autosave.mjs';
-import {PictureRenderer} from './pictures.mjs';
-import {DialogueHold} from './dialogue-hold.mjs';
-import {MusicPlayer,nextMusic} from './music.mjs';
-import {WEBMCP_ENABLED} from './config.mjs';
-import {registerGameTools} from './webmcp.mjs';
-import {guideSections,locateGuideSection,guideTextRuns,guideGrammar} from './guide.mjs';
+import {GameEngine,plainText,textRuns} from './engine.98655b91988440c18163.mjs';
+import {LocalSaves} from './storage.5b74a4f0744f59430dec.mjs';
+import {ReplayLibrary} from './replay.8c65d485a3c52deff7d1.mjs';
+import {AutosaveScheduler} from './autosave.0fb6821afbfd99cd9d6d.mjs';
+import {PictureRenderer} from './pictures.287d2f599d1c66db74d5.mjs';
+import {DialogueHold} from './dialogue-hold.026726a8a3f493f7affe.mjs';
+import {MusicPlayer,nextMusic} from './music.03f9117db9a3671f915f.mjs';
+import {WEBMCP_ENABLED} from './config.b7e49eefe77eb1d3aa8d.mjs';
+import {registerGameTools} from './webmcp.31eb8431a184ab982384.mjs';
+import {guideSections,locateGuideSection,guideTextRuns,guideGrammar} from './guide.de69d06ded97d76f57bf.mjs';
 
 const $ = id => document.getElementById(id);
 let story, assets, engine, saved, saves, dialogueHold, replay, autosave;
@@ -618,8 +618,8 @@ function syncSaved(event) {
 async function init() {
   try {
     const responses=await Promise.all([
-      fetch(new URL('./story.json',import.meta.url)),
-      fetch(new URL('./assets.json',import.meta.url)),
+      fetch(new URL('./story.3e9c79a2e09a599eb9c7.json',import.meta.url)),
+      fetch(new URL('./assets.1a8cc86a10662ca79de1.json',import.meta.url)),
     ]);
     if(responses.some(response=>!response.ok))throw new Error('遊戲資料未能載入。');
     [story,assets]=await Promise.all(responses.map(response=>response.json()));

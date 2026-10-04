@@ -7,7 +7,7 @@ import {DialogueHold} from './dialogue-hold.mjs';
 import {MusicPlayer,nextMusic} from './music.mjs';
 import {WEBMCP_ENABLED} from './config.mjs';
 import {registerGameTools} from './webmcp.mjs';
-import {guideSections,guideGlossary,locateGuideSection} from './guide.mjs';
+import {guideSections,locateGuideSection,guideTextRuns,guideGrammar} from './guide.mjs';
 
 const $ = id => document.getElementById(id);
 let story, assets, engine, saved, saves, dialogueHold, replay, autosave;
@@ -442,27 +442,56 @@ function navigateGuide(index,{scroll=true}={}) {
   });
 }
 
-function showGuideGloss(gloss) {
-  $('guide-gloss-title').textContent=`詞語：${gloss.term}`;
-  $('guide-gloss-definition').textContent=gloss.definition;
-  $('guide-gloss-source').textContent=gloss.source==='edb'?'教育局篇章註釋':'補充詞解';
+function guideNoteSource(note) {
+  return note.source==='edb'?'教育局篇章註釋':note.kind==='sentence'?'句式／用法補充':'補充詞解';
 }
 
-function appendGuideText(text,parent) {
-  const sorted=[...guideGlossary].sort((a,b)=>b.term.length-a.term.length);
-  let cursor=0,plain='';
-  const flush=()=>{if(plain){parent.append(document.createTextNode(plain));plain='';}};
-  while(cursor<text.length) {
-    const gloss=sorted.find(item=>text.startsWith(item.term,cursor));
-    if(!gloss){plain+=text[cursor++];continue;}
-    flush();
-    const button=document.createElement('button');
-    button.type='button';button.className='guide-term';button.textContent=gloss.term;
-    button.setAttribute('aria-label',`查看詞解：${gloss.term}`);
-    button.addEventListener('click',()=>showGuideGloss(gloss));
-    parent.append(button);cursor+=gloss.term.length;
+function showGuideGloss(value) {
+  const notes=Array.isArray(value)?value:[value],main=notes[0];
+  $('guide-gloss-title').textContent=`${main.kind==='sentence'?'句式／用法':'字詞'}：${main.term}`;
+  $('guide-gloss-definition').textContent=[main.partOfSpeech || main.label,main.definition].filter(Boolean).join('｜');
+  $('guide-gloss-source').textContent=guideNoteSource(main);
+  $('guide-gloss-context').textContent=main.context?`本句片段：「${main.context}」`:'';
+  $('guide-gloss-context').hidden=!main.context;
+  const related=$('guide-gloss-related');related.replaceChildren();related.hidden=notes.length<2;
+  if(notes.length>1) {
+    const details=document.createElement('details');
+    const summary=document.createElement('summary');summary.textContent=`相關短語與句式（${notes.length-1}）`;
+    details.append(summary);
+    for(const note of notes.slice(1)) {
+      const row=document.createElement('div');row.className='guide-note-row';
+      const heading=document.createElement('strong');heading.textContent=note.label?`${note.term} · ${note.label}`:note.term;
+      row.append(heading,paragraph('',[note.partOfSpeech,note.definition].filter(Boolean).join('｜')),
+        paragraph('guide-note-source',guideNoteSource(note)));
+      details.append(row);
+    }
+    related.append(details);
   }
-  flush();
+}
+
+function appendGuideText(section,parent) {
+  for(const run of guideTextRuns(section.id)) {
+    if(!run.annotations.length){parent.append(document.createTextNode(run.text));continue;}
+    const button=document.createElement('button');
+    button.type='button';button.className='guide-term';button.textContent=run.text;
+    const primary=run.annotations[0];
+    button.setAttribute('aria-label',`查看注釋：${primary.term}${primary.partOfSpeech?`（${primary.partOfSpeech}）`:''}`);
+    button.addEventListener('click',()=>showGuideGloss(run.annotations));parent.append(button);
+  }
+}
+
+function guideSentenceIndex(section) {
+  const notes=guideGrammar.filter(note=>note.sectionId===section.id);
+  if(!notes.length)return null;
+  const details=document.createElement('details');details.className='guide-sentence-index';
+  const summary=document.createElement('summary');summary.textContent=`句式與用法（${notes.length}）`;
+  const list=document.createElement('div');list.className='guide-sentence-list';
+  for(const note of notes) {
+    const button=document.createElement('button');button.type='button';button.className='guide-sentence-button';
+    button.textContent=`${note.term} · ${note.label}`;
+    button.addEventListener('click',()=>showGuideGloss({...note,kind:'sentence'}));list.append(button);
+  }
+  details.append(summary,list);return details;
 }
 
 function showGuide() {
@@ -471,7 +500,7 @@ function showGuide() {
   guideReadingIndex=guideGameIndex;
   openDialog('攻略','guide');
   const body=$('dialog-body');
-  const intro=paragraph('guide-intro','底線詞語可點擊查看詞解。原文會依遊戲進度定位，也可前後閱讀。');
+  const intro=paragraph('guide-intro','點擊底線字詞查看本句詞性與詞義；各段「句式與用法」可展開。詞義依教育局注釋或另列補充，詞性與句式按語境補充。');
 
   const controls=document.createElement('div');controls.className='guide-controls';
   const previous=document.createElement('button');previous.id='guide-previous';previous.type='button';previous.textContent='上一段';
@@ -490,17 +519,21 @@ function showGuide() {
   const position=paragraph('guide-position','');position.id='guide-position';
 
   const glossPanel=document.createElement('aside');glossPanel.className='guide-gloss-panel';glossPanel.setAttribute('aria-live','polite');glossPanel.setAttribute('aria-atomic','true');
-  const glossTitle=document.createElement('strong');glossTitle.id='guide-gloss-title';glossTitle.textContent='詞解';
-  const glossDefinition=paragraph('guide-gloss-definition','點擊底線詞語查看解釋。');glossDefinition.id='guide-gloss-definition';
+  const glossTitle=document.createElement('strong');glossTitle.id='guide-gloss-title';glossTitle.textContent='字詞／句式注釋';
+  const glossDefinition=paragraph('guide-gloss-definition','點擊字詞，或展開各段的「句式與用法」。');glossDefinition.id='guide-gloss-definition';
   const glossSource=paragraph('guide-gloss-source','');glossSource.id='guide-gloss-source';
-  glossPanel.append(glossTitle,glossDefinition,glossSource);
+  const glossContext=paragraph('guide-gloss-context','');glossContext.id='guide-gloss-context';glossContext.hidden=true;
+  const related=document.createElement('div');related.id='guide-gloss-related';related.hidden=true;
+  glossPanel.append(glossTitle,glossDefinition,glossSource,glossContext,related);
 
   const article=document.createElement('article');article.className='guide-article';
   guideSections.forEach((section,index)=>{
     const sectionNode=document.createElement('section');sectionNode.className='guide-passage';sectionNode.id=`guide-${section.id}`;
     const heading=document.createElement('h3');heading.textContent=`${index+1}. ${section.title}`;
-    const textNode=document.createElement('p');textNode.className='guide-text';appendGuideText(section.text,textNode);
-    sectionNode.append(heading,textNode);article.append(sectionNode);
+    const textNode=document.createElement('p');textNode.className='guide-text';appendGuideText(section,textNode);
+    sectionNode.append(heading,textNode);
+    const sentenceIndex=guideSentenceIndex(section);if(sentenceIndex)sectionNode.append(sentenceIndex);
+    article.append(sectionNode);
   });
 
   const references=document.createElement('p');references.className='guide-references';

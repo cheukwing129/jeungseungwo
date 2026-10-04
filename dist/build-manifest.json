@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "hash": "SHA-256/80",
-  "entry": "build/app.ff169d385a8c55abd97c.mjs",
+  "entry": "build/app.35a0cfed44cb6af84e1d.mjs",
   "files": {
     "assets/content/1131931ed81f0ef9c238.png": "1131931ed81f0ef9c238",
     "assets/content/9754f6b6fdf3a23de914.jpg": "9754f6b6fdf3a23de914",
@@ -59,8 +59,9 @@
     "build/music.03f9117db9a3671f915f.mjs": "03f9117db9a3671f915f",
     "build/config.b7e49eefe77eb1d3aa8d.mjs": "b7e49eefe77eb1d3aa8d",
     "build/webmcp.31eb8431a184ab982384.mjs": "31eb8431a184ab982384",
-    "build/guide.1d1011e0de9c54bea0d5.mjs": "1d1011e0de9c54bea0d5",
-    "build/app.ff169d385a8c55abd97c.mjs": "ff169d385a8c55abd97c",
-    "build/styles.1a670016dd30baa9b2a6.css": "1a670016dd30baa9b2a6"
+    "build/guide-notes.4cfe50fac2aa44879fcd.mjs": "4cfe50fac2aa44879fcd",
+    "build/guide.de69d06ded97d76f57bf.mjs": "de69d06ded97d76f57bf",
+    "build/app.35a0cfed44cb6af84e1d.mjs": "35a0cfed44cb6af84e1d",
+    "build/styles.ff69799448630ca47984.css": "ff69799448630ca47984"
   }
 }

@@ -10,7 +10,7 @@ import {AutosaveScheduler} from '../dist/autosave.mjs';
 import {MusicPlayer,nextMusic} from '../dist/music.mjs';
 import {WEBMCP_ENABLED} from '../dist/config.mjs';
 import {registerGameTools} from '../dist/webmcp.mjs';
-import {guideSections,guideGlossary,locateGuideSection} from '../dist/guide.mjs';
+import {guideSections,guideGlossary,locateGuideSection,guideTextRuns,guideGrammar} from '../dist/guide.mjs';
 
 class Clock {
   now = 0;
@@ -274,7 +274,7 @@ async function application(reducedMotion = false, pointerEvents = true, savedVal
   const context = vm.createContext({
     document, GameEngine, plainText, textRuns, LocalSaves, ReplayLibrary, AutosaveScheduler:AutosaveWithClock, DialogueHold:HoldWithClock, PictureRenderer:PicturesWithClock,
     MusicPlayer:MusicWithStub, nextMusic, WEBMCP_ENABLED:webMcp, registerGameTools,
-    guideSections,guideGlossary,locateGuideSection,
+    guideSections,guideGlossary,locateGuideSection,guideTextRuns,guideGrammar,
     structuredClone, AbortController, URL, moduleUrl:'https://game.test/'+(compiled?buildManifest.entry:'app.mjs'),
     matchMedia:() => ({matches:reducedMotion}), Audio:AudioStub,
     localStorage:{getItem:key => memory.get(key) || null, setItem:(key, value) => {writes.push({key,value});memory.set(key, value);}},
@@ -816,8 +816,21 @@ for(const compiled of [false,true]) {
   emit(term,'click');
   assert(get('guide-gloss-definition').textContent.includes('戰國時代的高級官員'));
   assert.equal(get('guide-gloss-source').textContent,'教育局篇章註釋');
-  const added=ui.document.querySelectorAll('.guide-term').find(node=>node.textContent==='相如止臣');
+  const added=ui.document.querySelectorAll('.guide-term').find(node=>node.getAttribute('aria-label').includes('相如止臣'));
   emit(added,'click');assert.equal(get('guide-gloss-source').textContent,'補充詞解');
+  const once=ui.document.querySelectorAll('.guide-term').find(node=>node.textContent==='嘗');
+  emit(once,'click');assert(get('guide-gloss-definition').textContent.includes('副詞｜曾經'));
+  const planned=ui.document.querySelectorAll('.guide-term').find(node=>node.textContent==='計' && node.getAttribute('aria-label').includes('動詞'));
+  emit(planned,'click');assert(get('guide-gloss-definition').textContent.includes('動詞｜計劃'));
+  assert(get('guide-gloss-related').textContent.includes('竊計'));
+  const fronted=ui.document.querySelectorAll('.guide-sentence-button').find(node=>node.textContent.startsWith('何以知之'));
+  emit(fronted,'click');assert(get('guide-gloss-definition').textContent.includes('以何知之'));
+  assert(get('guide-gloss-definition').textContent.includes('賓語前置'));
+  assert.equal(get('guide-gloss-source').textContent,'句式／用法補充');
+  assert.equal(ui.document.querySelectorAll('.guide-sentence-button').length,50);
+  const appointment=ui.document.querySelectorAll('.guide-sentence-button').find(node=>node.textContent.startsWith('秦王使使者告趙王'));
+  emit(appointment,'click');assert(get('guide-gloss-definition').textContent.includes('第一個「使」是派遣'));
+  assert(get('guide-gloss-definition').textContent.includes('作名詞'));
   emit(get('guide-next'),'click');ui.clock.advance(0);
   assert.equal(ui.read('guideReadingIndex'),1);
   assert.equal(get('guide-return-to-progress').hidden,false);
