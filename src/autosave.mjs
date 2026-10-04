@@ -1,6 +1,11 @@
 /** Keep the latest running state in memory and snapshot it only at a bounded interval or a checkpoint. */
 export class AutosaveScheduler {
-  constructor(save,{interval = 2000,setTimer = setTimeout,clearTimer = clearTimeout} = {}) {
+  constructor(save,{
+    interval = 2000,
+    // Native browser timers must receive Window, never the scheduler instance.
+    setTimer = (callback,delay) => globalThis.setTimeout(callback,delay),
+    clearTimer = timer => globalThis.clearTimeout(timer),
+  } = {}) {
     this.save = save;
     this.interval = interval;
     this.setTimer = setTimer;
